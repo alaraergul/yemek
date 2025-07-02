@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, Request
 from firebase_admin import credentials, initialize_app, db
 from dotenv import load_dotenv
 from os import getenv
@@ -11,9 +11,31 @@ firebase = initialize_app(cred, {
   "databaseURL": getenv("FIREBASE_URL")
 })
 
+def check_is_valid_json(req: Request, element_count: int):
+  if not req.is_json or not isinstance(req.json, dict):
+    return '{"code": 400, "message": "Body must be a JSON object."}'
+
+  if len(req.json) != element_count:
+    return f'{{"code": 400, "message": "Body must contain exactly {element_count} members."}}'
+
+  return ""
+
 @app.route("/users/<int:user_id>", methods = ["POST"])
 def post_meal(user_id):
   ref = db.reference(f"/{user_id}")
+
+  if (error := check_is_valid_json(request, 3)) != "":
+    return error
+
+  if not "id" in request.json or not isinstance(request.json["id"], int):
+    return '{"code": 400, "message": "Body must contain \"id\" key and it must be a number."}'
+
+  if not "count" in request.json or not isinstance(request.json["count"], int):
+    return '{"code": 400, "message": "Body must contain \"count\" key and it must be a number."}'
+
+  if not "timestamp" in request.json or not isinstance(request.json["timestamp"], int):
+    return '{"code": 400, "message": "Body must contain \"timestamp\" key and it must be a number that represents unix timestamp."}'
+
   ref.push(request.json)
   return ""
 
@@ -25,6 +47,15 @@ def get_meal(user_id):
 
 @app.route("/users/<int:user_id>", methods = ["DELETE"])
 def delete_meal(user_id):
+  if (error := check_is_valid_json(request, 2)) != "":
+    return error
+
+  if not "id" in request.json or not isinstance(request.json["id"], int):
+    return '{"code": 400, "message": "Body must contain \"id\" key and it must be a number."}'
+
+  if not "timestamp" in request.json or not isinstance(request.json["timestamp"], int):
+    return '{"code": 400, "message": "Body must contain \"timestamp\" key and it must be a number that represents unix timestamp."}'
+
   ref = db.reference(f"/{user_id}")
   data: dict = ref.get()
   new_data = dict()
