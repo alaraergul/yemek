@@ -1,4 +1,5 @@
 from flask import Flask, request, Request
+from flask_cors import CORS
 from firebase_admin import credentials, initialize_app, db
 from dotenv import load_dotenv
 from os import getenv
@@ -6,6 +7,8 @@ from os import getenv
 load_dotenv()
 
 app = Flask(__name__)
+CORS(app)
+
 cred = credentials.Certificate("./firebase-key.json")
 firebase = initialize_app(cred, {
   "databaseURL": getenv("FIREBASE_URL")
