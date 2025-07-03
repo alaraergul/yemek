@@ -15,7 +15,7 @@ const API_URL = "http://localhost:5000";
 })
 export class MealFormComponent implements OnInit {
   userId: number = 1;
-  data$: Promise<MealEntry[] | null> = Promise.resolve(null);
+  data$: Promise<MealEntry[] | undefined> = Promise.resolve(undefined);
 
   currentMealEntry: Nullable<MealEntry> = {
     timestamp: null,
@@ -48,7 +48,12 @@ export class MealFormComponent implements OnInit {
       count,
       timestamp
     }).subscribe(async (response) => {
-      const mealEntry = response as MealEntry;
+      const mealEntry: MealEntry = {
+        meal: meals.find((meal) => meal.id == mealId) as Meal,
+        timestamp,
+        count
+      };
+
       const data = await this.data$;
       data?.push(mealEntry);
 
@@ -56,14 +61,13 @@ export class MealFormComponent implements OnInit {
     });
   }
 
-  public deleteMealEntry(mealId: string, timestamp: number) {
+  public deleteMealEntry(mealId: number, timestamp: number) {
     this.http.post(`{API_URL}/users/${this.userId}`, {
       id: mealId,
       timestamp
     }).subscribe(async (response) => {
-      const mealEntry = response as MealEntry;
-      const data = await this.data$;
-      data?.push(mealEntry);
+      let data = await this.data$;
+      data = data?.filter((entry) => entry.timestamp != timestamp && entry.meal.id != mealId)
 
       this.data$ = Promise.resolve(data);
     });
