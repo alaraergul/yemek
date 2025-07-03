@@ -47,7 +47,7 @@ def get_meal(user_id):
   ref = db.reference(f"/{user_id}")
   data: dict = ref.get()
 
-  if ref.get() == None or ref.get().count == 0:
+  if ref.get() == None:
     return list()
   else:
     return list(data.values())
