@@ -1,12 +1,11 @@
-@let data = (data$ | async);
+  <div class="meal-form" *ngIf="data$ | async as data">
 
-<div class="meal-form" *ngIf="data">
-  <h2>Saat ve Yemek Seç!</h2>
+  <h2>🍽️ Saat ve Yemek Seç!</h2>
 
   <label for="time">Saat:</label>
   <input (input)="onDateInput($event)" type="datetime-local" />
 
-  <label for="time">Yediğiniz porsiyon sayısı:</label>
+  <label for="count">Yediğiniz porsiyon sayısı:</label>
   <input [(ngModel)]="currentMealEntry.count" type="number" />
 
   <label for="meal">Yemek:</label>
@@ -14,17 +13,19 @@
     <option *ngFor="let meal of getAllMeals()" [value]="meal.id">{{ meal.name }}</option>
   </select>
 
-  <div *ngIf="currentMealEntry.meal && currentMealEntry.count && currentMealEntry.timestamp; else error">
-    <button (click)="addMeal(currentMealEntry.meal.id, currentMealEntry.count, currentMealEntry.timestamp)">➕ Add</button>
-  </div>
 
-  <ng-template #error>
-    <p>Lütfen tarihi, yediğiniz yemeği ve yediğiniz porsiyon sayısını doldurun.</p>
-  </ng-template>
+  <div *ngIf="data$ | async as data">
+    <button (click)="addMeal()" [disabled]="!currentMealEntry.meal || currentMealEntry.count === null || !currentMealEntry.timestamp">
+      <i class="fas fa-plus-circle"></i> Add
+    </button>
 
-  <hr>
+    <button class="reset-button" (click)="resetMeals()">
+      <i class="fas fa-trash"></i> Günü Sıfırla
+    </button>
+
+    <hr>
+
   <h3>Günlük</h3>
-
   <div>
     <p><strong>Total Pürin:</strong> {{ getTotalPurine(data) }} mg</p>
     <p><strong>Yorum:</strong> {{ getComment(data) }}</p>

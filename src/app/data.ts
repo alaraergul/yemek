@@ -6,6 +6,7 @@ export interface MealEntry {
   meal: Meal;
   count: number;
   timestamp: number;
+  id ?: number;
 };
 
 export interface Meal {

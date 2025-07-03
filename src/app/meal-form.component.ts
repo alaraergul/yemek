@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Meal, MealEntry, meals, Nullable } from './data';
 import { HttpClient } from '@angular/common/http';
+import { Meal, MealEntry, meals } from './data';
 
 const API_URL = "http://localhost:5000";
 
@@ -15,101 +15,116 @@ const API_URL = "http://localhost:5000";
 })
 export class MealFormComponent implements OnInit {
   userId: number = 1;
-  data$: Promise<MealEntry[] | undefined> = Promise.resolve(undefined);
+  data$: Promise<MealEntry[]> = Promise.resolve([]);
+  todayEntries: MealEntry[] = [];
 
-  currentMealEntry: Nullable<MealEntry> = {
-    timestamp: null,
-    count: null,
-    meal: null
+  currentMealEntry = {
+    timestamp: '',
+    count: null as number | null,
+    meal: null as Meal | null
   };
 
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
-    this.http.get(`${API_URL}/users/${this.userId}`).subscribe((response) => {
-      const entries: MealEntry[] = [];
-      const res = response as ({id: number, count: number, tiemstamp: number})[];
-
-      for (const value of res) {
-        entries.push({
-          meal: this.getAllMeals().find((meal) => meal.id == value.id) as Meal,
-          count: value.count,
-          timestamp: value.count
-        })
-      }
-
-      this.data$ = Promise.resolve(entries);
-    });
+    this.loadTodayMeals();
   }
 
-  addMeal(mealId: number, count: number, timestamp: number) {
-    this.http.post(`${API_URL}/users/${this.userId}`, {
-      id: mealId,
-      count,
-      timestamp
-    }).subscribe(async (response) => {
-      const mealEntry: MealEntry = {
-        meal: meals.find((meal) => meal.id == mealId) as Meal,
-        timestamp,
-        count
-      };
+  async loadTodayMeals(): Promise<void> {
+    const allEntries = await this.http.get<MealEntry[]>(`${API_URL}/users/${this.userId}`).toPromise() || [];
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
 
-      const data = await this.data$;
-      data?.push(mealEntry);
-
-      this.data$ = Promise.resolve(data);
+    this.todayEntries = allEntries.filter(entry => {
+      const ts = typeof entry.timestamp === 'string' ? Number(entry.timestamp) : entry.timestamp;
+      return ts >= todayStart.getTime() && ts <= todayEnd.getTime();
     });
+
+    this.data$ = Promise.resolve(this.todayEntries);
   }
 
-  public deleteMealEntry(mealId: number, timestamp: number) {
-    this.http.post(`{API_URL}/users/${this.userId}`, {
-      id: mealId,
-      timestamp
-    }).subscribe(async (response) => {
-      let data = await this.data$;
-      data = data?.filter((entry) => entry.timestamp != timestamp && entry.meal.id != mealId)
-
-      this.data$ = Promise.resolve(data);
-    });
-  }
-
-  onSelectMeal(event: Event) {
-    if (event.target) {
-      const target = event.target as HTMLInputElement;
-      this.currentMealEntry.meal = meals.find(meal => meal.id == parseInt(target.value)) as Meal;
+  async addMeal(): Promise<void> {
+    if (!this.currentMealEntry.meal || this.currentMealEntry.count === null || !this.currentMealEntry.timestamp) {
+      alert("Lütfen tüm alanları doldurun.");
+      return;
     }
+
+    const mealId = this.currentMealEntry.meal.id;
+    const count = this.currentMealEntry.count;
+    const tsNumber = new Date(this.currentMealEntry.timestamp).getTime();
+
+    const exists = this.todayEntries.some(entry =>
+      entry.id === mealId && Number(entry.timestamp) === tsNumber
+    );
+
+    if (exists) {
+      alert("Bu kayıt zaten girilmiş.");
+      return;
+    }
+
+    const body = {
+      id: mealId,
+      count: count,
+      timestamp: tsNumber
+    };
+
+    await this.http.post(`${API_URL}/users/${this.userId}`, body).toPromise();
+    this.currentMealEntry = { timestamp: '', count: null, meal: null };
+    this.loadTodayMeals();
   }
 
-  onDateInput(event: Event) {
-    if (event.target) {
-      const target = event.target as HTMLInputElement;
-      const date = new Date(target.value);
-      this.currentMealEntry.timestamp = date.getTime();
+  async resetMeals(): Promise<void> {
+    const allEntries = await this.http.get<MealEntry[]>(`${API_URL}/users/${this.userId}`).toPromise() || [];
+
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const todayEntries = allEntries.filter(entry => {
+      const ts = typeof entry.timestamp === 'string' ? Number(entry.timestamp) : entry.timestamp;
+      return ts >= todayStart.getTime() && ts <= todayEnd.getTime();
+    });
+
+    for (const entry of todayEntries) {
+      await this.http.request('delete', `${API_URL}/users/${this.userId}`, {
+        body: {
+          id: entry.id,
+          timestamp: entry.timestamp
+        }
+      }).toPromise();
     }
+
+    this.loadTodayMeals();
+  }
+
+  getAllMeals(): Meal[] {
+    return meals;
   }
 
   getTotalPurine(data: MealEntry[]): number {
-    return data.reduce((sum, value) => sum + (value.count * value.meal.purine), 0);
+    return data.reduce((total, entry) => {
+      const m = meals.find(meal => meal.id === entry.id || meal.id === entry.meal?.id);
+      return m ? total + (entry.count * m.purine) : total;
+    }, 0);
   }
 
   getComment(data: MealEntry[]): string {
     const total = this.getTotalPurine(data);
-    if (total <= 120) return "Gayet sağlıklı bir gün geçirmişsiniz!";
-    if (total <= 200) return "Sınırda, dikkatli olmanız iyi olur.";
-    return "Bugün biraz fazla pürin almışsınız! Tavsiyeler: Et tüketimini azaltın, sebze artırın.";
+    if (total < 200) return "Harika! Düşük pürin aldınız.";
+    else if (total < 400) return "İyi gidiyorsunuz ama dikkatli olun.";
+    else return "Dikkat! Bugünkü pürin alımı yüksek.";
   }
 
-  getNonNullMealEntry(): MealEntry {
-    const mealEntry: MealEntry = {
-      timestamp: this.currentMealEntry.timestamp as number,
-      count: this.currentMealEntry.count as number,
-      meal: this.currentMealEntry.meal as Meal
-    };
-
-    return mealEntry;
+  onSelectMeal(event: Event): void {
+    const mealId = Number((event.target as HTMLSelectElement).value);
+    const selected = meals.find(m => m.id === mealId);
+    if (selected) this.currentMealEntry.meal = selected;
   }
 
-  public getAllMeals(): Meal[] {
-    return meals;
+  onDateInput(event: Event): void {
+    this.currentMealEntry.timestamp = (event.target as HTMLInputElement).value;
   }
 }
