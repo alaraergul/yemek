@@ -1,26 +1,33 @@
-<div class="meal-form">
+@let data = (data$ | async);
+
+<div class="meal-form" *ngIf="data">
   <h2>Saat ve Yemek Seç!</h2>
 
   <label for="time">Saat:</label>
-  <select [(ngModel)]="selectedTime">
-    <option *ngFor="let time of times" [value]="time">{{ time }}</option>
-  </select>
+  <input (input)="onDateInput($event)" type="datetime-local" />
+
+  <label for="time">Yediğiniz porsiyon sayısı:</label>
+  <input [(ngModel)]="currentMealEntry.count" type="number" />
 
   <label for="meal">Yemek:</label>
-  <select [(ngModel)]="selectedMealId">
-    <option *ngFor="let meal of mealList" [value]="meal.id">{{ meal.name }}</option>
+  <select (change)="onSelectMeal($event)">
+    <option *ngFor="let meal of getAllMeals()" [value]="meal.id">{{ meal.name }}</option>
   </select>
 
-  <button (click)="addMeal()">➕ Add</button>
+  <div *ngIf="currentMealEntry.meal && currentMealEntry.count && currentMealEntry.timestamp; else error">
+    <button (click)="addMeal(currentMealEntry.meal.id, currentMealEntry.count, currentMealEntry.timestamp)">➕ Add</button>
+  </div>
+
+  <ng-template #error>
+    <p>{{ currentMealEntry.meal?.id }}</p>
+    <p>Lütfen tarihi, yediğiniz yemeği ve yediğiniz porsiyon sayısını doldurun.</p>
+  </ng-template>
 
   <hr>
   <h3>Günlük</h3>
 
   <div>
-    <p><strong>Sabah:</strong> {{ getNamesFor(getMeals().breakfast) }}</p>
-    <p><strong>Öğlen:</strong> {{ getNamesFor(getMeals().lunch) }}</p>
-    <p><strong>Akşam:</strong> {{ getNamesFor(getMeals().dinner) }}</p>
-    <p><strong>Total Pürin:</strong> {{ getTotalPurine() }} mg</p>
-    <p><strong>Yorum:</strong> {{ getComment() }}</p>
+    <p><strong>Total Pürin:</strong> {{ getTotalPurine(data) }} mg</p>
+    <p><strong>Yorum:</strong> {{ getComment(data) }}</p>
   </div>
 </div>

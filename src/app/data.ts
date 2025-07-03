@@ -1,4 +1,14 @@
-export interface  Meal {
+export type Nullable<T> = {
+  [P in keyof T]: T[P] | null;
+};
+
+export interface MealEntry {
+  meal: Meal;
+  count: number;
+  timestamp: number;
+};
+
+export interface Meal {
   id: number;
   name: string;
   purine: number; // milligram
