@@ -73,3 +73,10 @@ def delete_meal(user_id):
 
   ref.set(new_data)
   return ""
+
+@app.route("/users", methods = ["GET"])
+def get_users():
+  ref = db.reference("/")
+  data: dict = ref.get()
+
+  return list(data.keys())
