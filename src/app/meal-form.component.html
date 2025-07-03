@@ -1,0 +1,26 @@
+<div class="meal-form">
+  <h2>Saat ve Yemek Seç!</h2>
+
+  <label for="time">Saat:</label>
+  <select [(ngModel)]="selectedTime">
+    <option *ngFor="let time of times" [value]="time">{{ time }}</option>
+  </select>
+
+  <label for="meal">Yemek:</label>
+  <select [(ngModel)]="selectedMealId">
+    <option *ngFor="let meal of mealList" [value]="meal.id">{{ meal.name }}</option>
+  </select>
+
+  <button (click)="addMeal()">➕ Add</button>
+
+  <hr>
+  <h3>Günlük</h3>
+
+  <div>
+    <p><strong>Sabah:</strong> {{ getNamesFor(getMeals().breakfast) }}</p>
+    <p><strong>Öğlen:</strong> {{ getNamesFor(getMeals().lunch) }}</p>
+    <p><strong>Akşam:</strong> {{ getNamesFor(getMeals().dinner) }}</p>
+    <p><strong>Total Pürin:</strong> {{ getTotalPurine() }} mg</p>
+    <p><strong>Yorum:</strong> {{ getComment() }}</p>
+  </div>
+</div>

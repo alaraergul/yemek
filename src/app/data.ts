@@ -1,4 +1,4 @@
-export interface Meal {
+export interface  Meal {
   id: number;
   name: string;
   purine: number; // milligram

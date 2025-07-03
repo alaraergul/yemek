@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { Meal, meals } from './data';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { MealFormComponent } from './meal-form.component';
+
 
 interface MealEntry {
   meal: Meal;
@@ -10,7 +12,8 @@ interface MealEntry {
 
 @Component({
   selector: 'app-root',
-  imports: [],
+  standalone: true,
+  imports: [ MealFormComponent, MealFormComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
