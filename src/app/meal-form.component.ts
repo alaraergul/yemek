@@ -14,7 +14,7 @@ const API_URL = "http://localhost:5000";
   styleUrls: ['./meal-form.component.css']
 })
 export class MealFormComponent implements OnInit {
-  userId: number = 1;
+  userId: Promise<number | null> = Promise.resolve(null);
   data$: Promise<MealEntry[]> = Promise.resolve([]);
   today = new Date();
   date = {
@@ -24,15 +24,16 @@ export class MealFormComponent implements OnInit {
   };
 
   currentMealEntry: Nullable<MealEntry> = {
-    timestamp: null,
+    timestamp: this.today.getTime(),
     count: null,
     meal: null
   };
 
   constructor(private http: HttpClient) {}
 
-  ngOnInit(): void {
-    this.loadEntries();
+  async ngOnInit(): Promise<void> {
+    await this.loadId();
+    await this.loadEntries();
   }
 
   createDateFrom(timestamp: number) {
@@ -43,8 +44,30 @@ export class MealFormComponent implements OnInit {
     return value.toString().padStart(2, "0")
   }
 
+  async loadId(): Promise<void> {
+    let id = localStorage.getItem("id");
+
+    if (id) {
+      this.userId = Promise.resolve(parseInt(id));
+      return;
+    }
+
+    this.http.get<string[]>(`${API_URL}/users`).subscribe(response => {
+      const res = response.map((value) => parseInt(value));
+      let value;
+
+      do {
+        value = Math.floor(Math.random() * 10000);
+      } while (res.includes(value));
+
+      id = value.toString();
+      localStorage.setItem("id", id);
+      this.userId = Promise.resolve(value);
+    });
+  }
+
   async loadEntries(): Promise<void> {
-    this.http.get<({id: number, count: number, timestamp: number})[]>(`${API_URL}/users/${this.userId}`).subscribe((response) => {
+    this.http.get<({id: number, count: number, timestamp: number})[]>(`${API_URL}/users/${await this.userId}`).subscribe((response) => {
       const entries: MealEntry[] = [];
 
       for (const value of response) {
@@ -78,7 +101,7 @@ export class MealFormComponent implements OnInit {
       timestamp
     };
 
-    await fetch(`${API_URL}/users/${this.userId}`, {
+    await fetch(`${API_URL}/users/${await this.userId}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -101,7 +124,7 @@ export class MealFormComponent implements OnInit {
     const entriesByDate = this.getEntriesOfDate(data);
 
     for (const entry of entriesByDate) {
-      await fetch(`${API_URL}/users/${this.userId}`, {
+      await fetch(`${API_URL}/users/${await this.userId}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
