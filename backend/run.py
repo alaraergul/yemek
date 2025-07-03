@@ -46,7 +46,11 @@ def post_meal(user_id):
 def get_meal(user_id):
   ref = db.reference(f"/{user_id}")
   data: dict = ref.get()
-  return list(data.values())
+
+  if ref.get() == None or ref.get().count == 0:
+    return list()
+  else:
+    return list(data.values())
 
 @app.route("/users/<int:user_id>", methods = ["DELETE"])
 def delete_meal(user_id):
