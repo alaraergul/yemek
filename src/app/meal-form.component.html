@@ -1,9 +1,16 @@
-  <div class="meal-form" *ngIf="data$ | async as data">
+@let data = (data$ | async);
+
+<div class="meal-form" *ngIf="data">
+  @let dataByDate = getEntriesOfDate(data);
 
   <h2>🍽️ Saat ve Yemek Seç!</h2>
 
   <label for="time">Saat:</label>
-  <input (input)="onDateInput($event)" type="datetime-local" />
+  <input (input)="onTimestampInput($event)"
+    [value]="`${today.getFullYear()}-${addZero(today.getMonth() + 1)}-${addZero(today.getDate())}T${addZero(today.getHours())}:${addZero(today.getMinutes())}`"
+    [max]="`${today.getFullYear()}-${addZero(today.getMonth() + 1)}-${addZero(today.getDate())}T${addZero(today.getHours())}:${addZero(today.getMinutes())}`"
+    type="datetime-local"
+  />
 
   <label for="count">Yediğiniz porsiyon sayısı:</label>
   <input [(ngModel)]="currentMealEntry.count" type="number" />
@@ -13,21 +20,50 @@
     <option *ngFor="let meal of getAllMeals()" [value]="meal.id">{{ meal.name }}</option>
   </select>
 
-
-  <div *ngIf="data$ | async as data">
+  <div>
     <button (click)="addMeal()" [disabled]="!currentMealEntry.meal || currentMealEntry.count === null || !currentMealEntry.timestamp">
       <i class="fas fa-plus-circle"></i> Add
     </button>
 
-    <button class="reset-button" (click)="resetMeals()">
+    <hr />
+    @let monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+
+    <input (input)="onDateInput($event)" type="date"
+      [value]="`${date.year}-${addZero(date.month + 1)}-${addZero(date.day)}`"
+      [max]="`${today.getFullYear()}-${addZero(today.getMonth() + 1)}-${addZero(today.getDate())}`"
+    />
+    <h3>{{ addZero(date.day) }} {{ monthNames[date.month] }} {{ date.year }} için alınmış pürin bilgisi</h3>
+
+    <button class="reset-button" (click)="resetMealsByDate()">
       <i class="fas fa-trash"></i> Günü Sıfırla
     </button>
 
-    <hr>
+    <h4><strong>Tüketilen yiyecekler</strong></h4>
+    <table>
+      <tr>
+        <th>Yiyecek</th>
+        <th>Porsiyon sayısı</th>
+        <th>Saat</th>
+        <th>Pürin miktarı</th>
+      </tr>
 
-  <h3>Günlük</h3>
-  <div>
-    <p><strong>Total Pürin:</strong> {{ getTotalPurine(data) }} mg</p>
-    <p><strong>Yorum:</strong> {{ getComment(data) }}</p>
+      <tr *ngFor="let entry of dataByDate">
+        @let consumedAt = createDateFrom(entry.timestamp);
+        <td>{{ entry.meal.name }}</td>
+        <td>{{ entry.count }}</td>
+        <td>{{ addZero(consumedAt.getHours()) }}:{{ addZero(consumedAt.getMinutes()) }}:{{ addZero(consumedAt.getSeconds()) }}</td>
+        <td>{{ entry.meal.purine * entry.count }}</td>
+      </tr>
+    </table>
+
+    <div>
+      @let takenPurineOfToday = getTotalPurine(dataByDate);
+      @let takenPurine = getTotalPurine(data);
+
+      <p><strong>Günlük Toplam Pürin:</strong> {{ takenPurineOfToday }} mg</p>
+      <p><strong>Yorum:</strong> {{ getComment(takenPurineOfToday) }}</p>
+      <br />
+      <p><strong>Toplam Pürin:</strong> {{ takenPurine }} mg</p>
+      <p><strong>Yorum:</strong> {{ getComment(takenPurine) }}</p>
+    </div>
   </div>
-</div>

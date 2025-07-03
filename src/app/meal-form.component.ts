@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { Meal, MealEntry, meals } from './data';
+import { Meal, MealEntry, meals, Nullable } from './data';
 
 const API_URL = "http://localhost:5000";
 
@@ -16,48 +16,56 @@ const API_URL = "http://localhost:5000";
 export class MealFormComponent implements OnInit {
   userId: number = 1;
   data$: Promise<MealEntry[]> = Promise.resolve([]);
-  todayEntries: MealEntry[] = [];
+  today = new Date();
+  date = {
+    day: this.today.getDate(),
+    month: this.today.getMonth(),
+    year: this.today.getFullYear()
+  };
 
-  currentMealEntry = {
-    timestamp: '',
-    count: null as number | null,
-    meal: null as Meal | null
+  currentMealEntry: Nullable<MealEntry> = {
+    timestamp: null,
+    count: null,
+    meal: null
   };
 
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
-    this.loadTodayMeals();
+    this.loadEntries();
   }
 
-  async loadTodayMeals(): Promise<void> {
-    const allEntries = await this.http.get<MealEntry[]>(`${API_URL}/users/${this.userId}`).toPromise() || [];
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date();
-    todayEnd.setHours(23, 59, 59, 999);
+  createDateFrom(timestamp: number) {
+    return new Date(timestamp);
+  }
 
-    this.todayEntries = allEntries.filter(entry => {
-      const ts = typeof entry.timestamp === 'string' ? Number(entry.timestamp) : entry.timestamp;
-      return ts >= todayStart.getTime() && ts <= todayEnd.getTime();
+  addZero(value: number) {
+    return value.toString().padStart(2, "0")
+  }
+
+  async loadEntries(): Promise<void> {
+    this.http.get<({id: number, count: number, timestamp: number})[]>(`${API_URL}/users/${this.userId}`).subscribe((response) => {
+      const entries: MealEntry[] = [];
+
+      for (const value of response) {
+        entries.push({
+          meal: this.getAllMeals().find((meal) => meal.id == value.id) as Meal,
+          count: value.count,
+          timestamp: value.timestamp
+        })
+      }
+
+      this.data$ = Promise.resolve(entries);
     });
-
-    this.data$ = Promise.resolve(this.todayEntries);
   }
 
   async addMeal(): Promise<void> {
-    if (!this.currentMealEntry.meal || this.currentMealEntry.count === null || !this.currentMealEntry.timestamp) {
-      alert("Lütfen tüm alanları doldurun.");
-      return;
-    }
-
-    const mealId = this.currentMealEntry.meal.id;
+    const mealId = this.currentMealEntry.meal?.id;
     const count = this.currentMealEntry.count;
-    const tsNumber = new Date(this.currentMealEntry.timestamp).getTime();
+    const timestamp = this.currentMealEntry.timestamp;
 
-    const exists = this.todayEntries.some(entry =>
-      entry.id === mealId && Number(entry.timestamp) === tsNumber
-    );
+    const data = await this.data$;
+    const exists = data.some(entry => entry.meal.id === mealId && entry.timestamp === timestamp);
 
     if (exists) {
       alert("Bu kayıt zaten girilmiş.");
@@ -66,55 +74,70 @@ export class MealFormComponent implements OnInit {
 
     const body = {
       id: mealId,
-      count: count,
-      timestamp: tsNumber
+      count,
+      timestamp
     };
 
-    await this.http.post(`${API_URL}/users/${this.userId}`, body).toPromise();
-    this.currentMealEntry = { timestamp: '', count: null, meal: null };
-    this.loadTodayMeals();
-  }
-
-  async resetMeals(): Promise<void> {
-    const allEntries = await this.http.get<MealEntry[]>(`${API_URL}/users/${this.userId}`).toPromise() || [];
-
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date();
-    todayEnd.setHours(23, 59, 59, 999);
-
-    const todayEntries = allEntries.filter(entry => {
-      const ts = typeof entry.timestamp === 'string' ? Number(entry.timestamp) : entry.timestamp;
-      return ts >= todayStart.getTime() && ts <= todayEnd.getTime();
+    await fetch(`${API_URL}/users/${this.userId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body)
     });
 
-    for (const entry of todayEntries) {
-      await this.http.request('delete', `${API_URL}/users/${this.userId}`, {
-        body: {
-          id: entry.id,
+    data.push(this.currentMealEntry as MealEntry);
+    this.data$ = Promise.resolve(data);
+
+    this.currentMealEntry = {
+      timestamp: null,
+      count: null,
+      meal: null
+    };
+  }
+
+  async resetMealsByDate(): Promise<void> {
+    const data = await this.data$;
+    const entriesByDate = this.getEntriesOfDate(data);
+
+    for (const entry of entriesByDate) {
+      await fetch(`${API_URL}/users/${this.userId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: entry.meal.id,
           timestamp: entry.timestamp
-        }
-      }).toPromise();
+        })
+      });
     }
 
-    this.loadTodayMeals();
+    const mappedById = entriesByDate.map((entry) => entry.meal.id);
+    this.data$ = Promise.resolve(data.filter((entry) => !mappedById.includes(entry.meal.id)) as MealEntry[]);
   }
 
   getAllMeals(): Meal[] {
     return meals;
   }
 
+  getEntriesOfDate(data: MealEntry[]): MealEntry[] {
+    return data.filter(entry => {
+      const addedAt = new Date(entry.timestamp);
+      return addedAt.getDate() == this.date.day && addedAt.getMonth() == this.date.month && addedAt.getFullYear() == this.date.year;
+    })
+  }
+
   getTotalPurine(data: MealEntry[]): number {
     return data.reduce((total, entry) => {
-      const m = meals.find(meal => meal.id === entry.id || meal.id === entry.meal?.id);
+      const m = meals.find(meal => meal.id === entry.meal.id || meal.id === entry.meal?.id);
       return m ? total + (entry.count * m.purine) : total;
     }, 0);
   }
 
-  getComment(data: MealEntry[]): string {
-    const total = this.getTotalPurine(data);
-    if (total < 200) return "Harika! Düşük pürin aldınız.";
-    else if (total < 400) return "İyi gidiyorsunuz ama dikkatli olun.";
+  getComment(purineAmount: number): string {
+    if (purineAmount < 200) return "Harika! Düşük pürin aldınız.";
+    else if (purineAmount < 400) return "İyi gidiyorsunuz ama dikkatli olun.";
     else return "Dikkat! Bugünkü pürin alımı yüksek.";
   }
 
@@ -124,7 +147,14 @@ export class MealFormComponent implements OnInit {
     if (selected) this.currentMealEntry.meal = selected;
   }
 
+  onTimestampInput(event: Event): void {
+    this.currentMealEntry.timestamp = new Date((event.target as HTMLInputElement).value).getTime();
+  }
+
   onDateInput(event: Event): void {
-    this.currentMealEntry.timestamp = (event.target as HTMLInputElement).value;
+    const date = new Date((event.target as HTMLInputElement).value);
+    this.date.day = date.getDate();
+    this.date.month = date.getMonth();
+    this.date.year = date.getFullYear();
   }
 }

@@ -1,3 +1,11 @@
+* {
+  font-family: 'Poppins', sans-serif;
+}
+
+i {
+  font-family: "Font Awesome 6 Free" !important;
+}
+
 body {
   font-family: 'Poppins', sans-serif;
   background: linear-gradient(135deg, #e0f7fa, #fce4ec);
@@ -32,6 +40,7 @@ label {
   color: #555;
 }
 
+input[type="date"],
 input[type="datetime-local"],
 input[type="number"],
 select {
@@ -85,7 +94,7 @@ hr {
   border-top: 2px dashed #bbb;
 }
 
-h3 {
+h3, h4 {
   color: #333;
   font-weight: 600;
   margin-bottom: 12px;
@@ -102,7 +111,23 @@ p strong {
   color: #222;
 }
 
-p:last-child {
+p.comment {
   font-style: italic;
   color: #c62828;
+}
+
+table {
+  margin: auto;
+}
+
+th, td {
+  padding: 0 25px;
+}
+
+th {
+  font-weight: bold;
+}
+
+td {
+  text-align: center;
 }
