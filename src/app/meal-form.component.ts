@@ -25,8 +25,8 @@ export class MealFormComponent implements OnInit {
 
   currentMealEntry: Nullable<MealEntry> = {
     timestamp: this.today.getTime(),
-    count: null,
-    meal: null
+    count: 1,
+    meal: meals[0]
   };
 
   constructor(private http: HttpClient) {}
