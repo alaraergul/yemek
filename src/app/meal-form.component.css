@@ -158,7 +158,19 @@ td > i {
 
 .logout-button {
 
+  
   width: auto;
-  background: linear-gradient(to right);
+  padding: 10px 20px;
+  background: linear-gradient(to right,#90a4ae, #607d8b);
+  color: white;
+  border: none;
+  border-radius: 999px;
+  font-weight: 500;
+  font-size: 15px;
+  cursor: pointer;
+  margin-top: -20px;
+  margin-bottom: 20px;
+  transition: box-shadow 0.2s;
+
 
 }
