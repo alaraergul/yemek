@@ -4,6 +4,7 @@ import { API_URL } from "./environment";
 
 export interface User {
   id: string;
+  username?: string;
   weight: number;
 }
 
@@ -15,7 +16,7 @@ export interface Error {
 @Injectable({providedIn: "root"})
 export class AuthService {
   public user$?: Promise<User>;
-  public error$?: string;
+  public error$?: Promise<string>;
 
   constructor(private http: HttpClient) {
     if (typeof document !== "undefined" && document.cookie) {
@@ -24,7 +25,7 @@ export class AuthService {
 
       this.http.post<User | Error>(`${API_URL}/users/login`, {username, password}).subscribe(response => {
         if ((response as Error).code) {
-          this.error$ = (response as Error).message;
+          this.error$ = Promise.resolve((response as Error).message);
           return;
         }
 
@@ -38,7 +39,7 @@ export class AuthService {
 
     this.http.post<User | Error>(`${API_URL}/users/register`, {username, password, weight}).subscribe(response => {
       if ((response as Error).code) {
-        this.error$ = (response as Error).message;
+        this.error$ = Promise.resolve((response as Error).message);
         return;
       }
 
@@ -52,7 +53,7 @@ export class AuthService {
 
     this.http.post<User | Error>(`${API_URL}/users/login`, {username, password}).subscribe(response => {
       if ((response as Error).code) {
-        this.error$ = (response as Error).message;
+        this.error$ = Promise.resolve((response as Error).message);
         return;
       }
 

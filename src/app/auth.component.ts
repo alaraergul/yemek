@@ -10,6 +10,8 @@ import { CommonModule } from "@angular/common";
 export class AuthComponent {
   authService = inject(AuthService);
 
+  activeTab: 'login' | 'register' = 'login';
+
   login(username: string, password: string) {
     this.authService.login(username, password);
   }
@@ -27,6 +29,6 @@ export class AuthComponent {
   }
 
   get error$() {
-    return this.authService.logout();
+    return this.authService.error$;
   }
 }

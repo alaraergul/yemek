@@ -1,0 +1,30 @@
+<div class="auth-container">
+  <div class="tabs">
+    <button (click)="activeTab = 'login'" [class.active]="activeTab === 'login'">Giriş Yap</button>
+    <button (click)="activeTab = 'register'" [class.active]="activeTab === 'register'">Kayıt Ol</button>
+  </div>
+
+  <form *ngIf="activeTab === 'login'" (submit)="login(username.value, password.value); $event.preventDefault()">
+    <h2> Giriş Yap</h2>
+    <input type="text" #username placeholder="Kullanıcı Adı" required />
+    <input type="password" #password placeholder="Şifre" required />
+    <button type="submit">Giriş Yap</button>
+  </form>
+
+  <form *ngIf="activeTab === 'register'" (submit)="register(regUsername.value, regPassword.value, +regWeight.value); $event.preventDefault()">
+    <h2> Kayıt Ol</h2>
+    <input type="text" #regUsername placeholder="Yeni Kullanıcı Adı" required />
+    <input type="password" #regPassword placeholder="Yeni Şifre" required />
+    <input type="number" #regWeight placeholder="Kilonuz (kg)" required />
+    <button type="submit">Kayıt Ol</button>
+  </form>
+
+  <div class="user-info" *ngIf="user$ | async as user">
+     Merhaba, {{ user.username }}
+    <button (click)="logout()">Çıkış Yap</button>
+  </div>
+
+  <p class="error-message" *ngIf="(error$ | async)"> Error
+     {{ error$ }}
+  </p>
+</div>
