@@ -9,14 +9,15 @@ import { MealEntry } from '../data';
   standalone: true,
   imports: [CommonModule, BaseChartDirective],
   template: `
-    <div style="display: block;">
-      <canvas baseChart style="margin: auto;" width="400" height="400"
-        [type]="'line'"
-        [data]="lineChartData"
-        [options]="lineChartOptions"
-        [legend]="lineChartLegend">
-      </canvas>
-    </div>
+    <div style="width: 80%; max-width: 400px; height: 300px; margin: auto;">
+  <canvas baseChart
+    [type]="'line'"
+    [data]="lineChartData"
+    [options]="lineChartOptions"
+    [legend]="lineChartLegend">
+  </canvas>
+</div>
+
   `
 })
 export class ChartComponent implements OnInit {
@@ -45,7 +46,8 @@ export class ChartComponent implements OnInit {
   };
 
   public lineChartOptions: ChartOptions<'line'> = {
-    responsive: false
+    responsive: true,
+    maintainAspectRatio: false
   };
 
   public lineChartLegend = false;
