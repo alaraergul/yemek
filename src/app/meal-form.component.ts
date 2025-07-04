@@ -6,8 +6,7 @@ import { Meal, MealEntry, meals, Nullable } from './data';
 import { AuthService } from './auth.service';
 import { RouterLink } from '@angular/router';
 import { Router } from '@angular/router';
-
-const API_URL = "http://localhost:5000";
+import { API_URL } from './environment';
 
 @Component({
   selector: 'app-meal-form',
