@@ -17,11 +17,10 @@
       <div style="text-align: right; margin-bottom: 16px;">
         <button class="logout-button" (click)="logout()">Çıkış Yap</button>
       </div>
+        @let monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
 
-              @let monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim",
-        "Kasım", "Aralık"];
+        <app-chart [data]="data$"></app-chart>
 
-        <h2>🍽️ Yediğin Yiyecekleri Görüntüle!</h2>
         <input (input)="onDateInput($event)" type="date"
           [value]="`${date.year}-${addZero(date.month + 1)}-${addZero(date.day)}`"
           [max]="`${today.getFullYear()}-${addZero(today.getMonth() + 1)}-${addZero(today.getDate())}`" />

@@ -1,4 +1,4 @@
-from flask import Flask, request, Request
+from flask import Flask, request, Request, render_template
 from flask_cors import CORS
 from firebase_admin import credentials, initialize_app, db
 from dotenv import load_dotenv
@@ -13,6 +13,10 @@ cred = credentials.Certificate("./firebase-key.json")
 firebase = initialize_app(cred, {
   "databaseURL": getenv("FIREBASE_URL")
 })
+
+@app.route("/")
+def home():
+    return render_template('index.html')
 
 def check_is_valid_json(req: Request, element_count: int):
   if not req.is_json or not isinstance(req.json, dict):
@@ -132,3 +136,6 @@ def check_user_credientals():
       return {"id": key, "weight": value["weight"]}
 
   return {"code": 403, "message": "Wrong credientals"}
+
+if __name__ == "__main__":
+  app.run(port = 8080)

@@ -6,12 +6,13 @@ import { Meal, MealEntry, meals, Nullable } from './data';
 import { AuthService } from './auth.service';
 import { RouterLink } from '@angular/router';
 import { Router } from '@angular/router';
+import { ChartComponent } from './components/chart.js.component';
 import { API_URL } from './environment';
 
 @Component({
   selector: 'app-meal-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, ChartComponent],
   templateUrl: './meal-form.component.html',
   styleUrls: ['./meal-form.component.css']
 })
