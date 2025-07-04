@@ -5,8 +5,8 @@
 
   <ng-template #pleaseLogin>
     <div class="login">
-      <p>Please register or login!</p>
-      <a routerLink="/auth">Go to authorization page</a>
+      <p>Lütfen kayıt olun ya da giriş yapın!</p>
+      <a routerLink="/auth">Yetkilendirme sayfasına git</a>
     </div>
   </ng-template>
 
@@ -15,35 +15,13 @@
       @let dataByDate = getEntriesOfDate(data);
 
       <div style="text-align: right; margin-bottom: 16px;">
-  <button class="logout-button" (click)="logout()">Çıkış Yap</button>
-</div>
+        <button class="logout-button" (click)="logout()">Çıkış Yap</button>
+      </div>
 
-      <h2>🍽️ Saat ve Yemek Seç!</h2>
-
-      <label for="time">Saat:</label>
-      <input (input)="onTimestampInput($event)"
-        [value]="`${today.getFullYear()}-${addZero(today.getMonth() + 1)}-${addZero(today.getDate())}T${addZero(today.getHours())}:${addZero(today.getMinutes())}`"
-        [max]="`${today.getFullYear()}-${addZero(today.getMonth() + 1)}-${addZero(today.getDate())}T${addZero(today.getHours())}:${addZero(today.getMinutes())}`"
-        type="datetime-local" />
-
-      <label for="count">Yediğiniz porsiyon sayısı:</label>
-      <input [(ngModel)]="currentMealEntry.count" type="number" />
-
-      <label for="meal">Yemek:</label>
-      <select (change)="onSelectMeal($event)">
-        <option *ngFor="let meal of getAllMeals()" [value]="meal.id">{{ meal.name }}</option>
-      </select>
-
-      <div>
-        <button (click)="addMeal()"
-          [disabled]="!currentMealEntry.meal || currentMealEntry.count === null || !currentMealEntry.timestamp">
-          <i class="fas fa-plus-circle"></i> Ekle
-        </button>
-
-        <hr />
-        @let monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim",
+              @let monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim",
         "Kasım", "Aralık"];
 
+        <h2>🍽️ Yediğin Yiyecekleri Görüntüle!</h2>
         <input (input)="onDateInput($event)" type="date"
           [value]="`${date.year}-${addZero(date.month + 1)}-${addZero(date.day)}`"
           [max]="`${today.getFullYear()}-${addZero(today.getMonth() + 1)}-${addZero(today.getDate())}`" />
@@ -62,6 +40,7 @@
             <th>Pürin miktarı</th>
             <th>Şeker miktarı</th>
             <th>kcal</th>
+            <th>Sil</th>
           </tr>
 
           <tr *ngFor="let entry of dataByDate">
@@ -73,6 +52,7 @@
             <td>{{ entry.meal.purine * entry.count }} mg</td>
             <td>{{ entry.meal.sugar * entry.count }} g</td>
             <td>{{ entry.meal.kcal * entry.count }}</td>
+            <td><i (click)="deleteMeal(entry.meal.id, entry.timestamp)" class="fas fa-trash"></i></td>
           </tr>
         </table>
 
@@ -87,9 +67,27 @@
         </div>
       </div>
 
-    
+        <hr />
 
+        <h2>🍽️ Saat ve Yemek Seç!</h2>
 
-    </div>
+              <label for="time">Saat:</label>
+      <input (input)="onTimestampInput($event)"
+        [value]="`${today.getFullYear()}-${addZero(today.getMonth() + 1)}-${addZero(today.getDate())}T${addZero(today.getHours())}:${addZero(today.getMinutes())}`"
+        [max]="`${today.getFullYear()}-${addZero(today.getMonth() + 1)}-${addZero(today.getDate())}T${addZero(today.getHours())}:${addZero(today.getMinutes())}`"
+        type="datetime-local" />
+
+      <label for="count">Yediğiniz porsiyon sayısı:</label>
+      <input [(ngModel)]="currentMealEntry.count" type="number" />
+
+      <label for="meal">Yemek:</label>
+      <select (change)="onSelectMeal($event)">
+        <option *ngFor="let meal of getAllMeals()" [value]="meal.id">{{ meal.name }}</option>
+      </select>
+
+        <button (click)="addMeal()"
+          [disabled]="!currentMealEntry.meal || currentMealEntry.count === null || !currentMealEntry.timestamp">
+          <i class="fas fa-plus-circle"></i> Ekle
+        </button>
   </ng-template>
 </div>

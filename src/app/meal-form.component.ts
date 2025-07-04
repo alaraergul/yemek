@@ -109,6 +109,19 @@ export class MealFormComponent implements OnInit {
     };
   }
 
+  async deleteMeal(id: number, timestamp: number): Promise<void> {
+    await fetch(`${API_URL}/users/${(await this.user$)?.id}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({id, timestamp})
+    });
+
+    const data = await this.data$ as MealEntry[];
+    this.data$ = Promise.resolve(data.filter((entry) => entry.meal.id != id) as MealEntry[]);
+  }
+
   async resetMealsByDate(): Promise<void> {
     const data = await this.data$ as MealEntry[];
     const entriesByDate = this.getEntriesOfDate(data);

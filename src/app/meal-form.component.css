@@ -151,6 +151,11 @@ td {
   text-align: center;
 }
 
+td > i {
+  color: red;
+  cursor: pointer;
+}
+
 .logout-button {
 
   width: auto;
