@@ -4,20 +4,21 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Meal, MealEntry, meals, Nullable } from './data';
 import { AuthService } from './auth.service';
+import { RouterLink } from '@angular/router';
 
 const API_URL = "http://localhost:5000";
 
 @Component({
   selector: 'app-meal-form',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './meal-form.component.html',
   styleUrls: ['./meal-form.component.css']
 })
 export class MealFormComponent implements OnInit {
   authService = inject(AuthService);
 
-  data$: Promise<MealEntry[]> = Promise.resolve([]);
+  data$?: Promise<MealEntry[]>;
   today = new Date();
   date = {
     day: this.today.getDate(),
@@ -45,24 +46,26 @@ export class MealFormComponent implements OnInit {
     return value.toString().padStart(2, "0")
   }
 
-  get userId() {
+  get userId$() {
     return this.authService.user$?.then((user) => user.id);
   }
 
   async loadEntries(): Promise<void> {
-    this.http.get<({ id: number, count: number, timestamp: number })[]>(`${API_URL}/users/${await this.userId}`).subscribe((response) => {
-      const entries: MealEntry[] = [];
+    if (await this.userId$) {
+      this.http.get<({ id: number, count: number, timestamp: number })[]>(`${API_URL}/users/${await this.userId$}`).subscribe((response) => {
+        const entries: MealEntry[] = [];
 
-      for (const value of response) {
-        entries.push({
-          meal: this.getAllMeals().find((meal) => meal.id == value.id) as Meal,
-          count: value.count,
-          timestamp: value.timestamp
-        })
-      }
+        for (const value of response) {
+          entries.push({
+            meal: this.getAllMeals().find((meal) => meal.id == value.id) as Meal,
+            count: value.count,
+            timestamp: value.timestamp
+          })
+        }
 
-      this.data$ = Promise.resolve(entries);
-    });
+        this.data$ = Promise.resolve(entries);
+      });
+    }
   }
 
   async addMeal(): Promise<void> {
@@ -70,7 +73,7 @@ export class MealFormComponent implements OnInit {
     const count = this.currentMealEntry.count;
     const timestamp = this.currentMealEntry.timestamp;
 
-    const data = await this.data$;
+    const data = await this.data$ as MealEntry[];
     const exists = data.some(entry => entry.meal.id === mealId && entry.timestamp === timestamp);
 
     if (exists) {
@@ -84,7 +87,7 @@ export class MealFormComponent implements OnInit {
       timestamp
     };
 
-    await fetch(`${API_URL}/users/${await this.userId}`, {
+    await fetch(`${API_URL}/users/${await this.userId$}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -103,11 +106,11 @@ export class MealFormComponent implements OnInit {
   }
 
   async resetMealsByDate(): Promise<void> {
-    const data = await this.data$;
+    const data = await this.data$ as MealEntry[];
     const entriesByDate = this.getEntriesOfDate(data);
 
     for (const entry of entriesByDate) {
-      await fetch(`${API_URL}/users/${await this.userId}`, {
+      await fetch(`${API_URL}/users/${await this.userId$}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
