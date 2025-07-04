@@ -1,6 +1,7 @@
 import { Component, inject, OnInit } from "@angular/core";
 import { AuthService } from "./auth.service";
 import { CommonModule } from "@angular/common";
+import { RouterLink } from "@angular/router";
 
 enum Tabs {
   LOGIN,
@@ -10,7 +11,7 @@ enum Tabs {
 @Component({
   templateUrl: "./auth.component.html",
   styleUrl: "./auth.component.css",
-  imports: [CommonModule]
+  imports: [CommonModule, RouterLink]
 })
 export class AuthComponent implements OnInit {
   authService = inject(AuthService);

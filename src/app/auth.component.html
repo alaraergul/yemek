@@ -1,28 +1,32 @@
 <div class="auth-container">
-  <div class="tabs">
-    <button (click)="activeTab = Tabs.LOGIN" [class.active]="activeTab === Tabs.LOGIN">Giriş Yap</button>
-    <button (click)="activeTab = Tabs.REGISTER" [class.active]="activeTab === Tabs.REGISTER">Kayıt Ol</button>
+  <div *ngIf="!(user$ | async)">
+    <div class="tabs">
+      <button (click)="activeTab = Tabs.LOGIN" [class.active]="activeTab === Tabs.LOGIN">Giriş Yap</button>
+      <button (click)="activeTab = Tabs.REGISTER" [class.active]="activeTab === Tabs.REGISTER">Kayıt Ol</button>
+    </div>
+
+    <form *ngIf="activeTab == Tabs.LOGIN" (submit)="login(username.value, password.value); $event.preventDefault()">
+      <h2> Giriş Yap</h2>
+      <input type="text" #username placeholder="Kullanıcı Adı" required />
+      <input type="password" #password placeholder="Şifre" required />
+      <button type="submit">Giriş Yap</button>
+    </form>
+
+    <form *ngIf="activeTab === Tabs.REGISTER" (submit)="register(regUsername.value, regPassword.value, +regWeight.value); $event.preventDefault()">
+      <h2> Kayıt Ol</h2>
+      <input type="text" #regUsername placeholder="Yeni Kullanıcı Adı" required />
+      <input type="password" #regPassword placeholder="Yeni Şifre" required />
+      <input type="number" #regWeight placeholder="Kilonuz (kg)" required />
+      <button type="submit">Kayıt Ol</button>
+    </form>
   </div>
 
-  <form *ngIf="activeTab == Tabs.LOGIN" (submit)="login(username.value, password.value); $event.preventDefault()">
-    <h2> Giriş Yap</h2>
-    <input type="text" #username placeholder="Kullanıcı Adı" required />
-    <input type="password" #password placeholder="Şifre" required />
-    <button type="submit">Giriş Yap</button>
-  </form>
-
-  <form *ngIf="activeTab === Tabs.REGISTER" (submit)="register(regUsername.value, regPassword.value, +regWeight.value); $event.preventDefault()">
-    <h2> Kayıt Ol</h2>
-    <input type="text" #regUsername placeholder="Yeni Kullanıcı Adı" required />
-    <input type="password" #regPassword placeholder="Yeni Şifre" required />
-    <input type="number" #regWeight placeholder="Kilonuz (kg)" required />
-    <button type="submit">Kayıt Ol</button>
-  </form>
-
-  <div class="user-info" *ngIf="authService.isLogged$ | async">
-    |@let user = (user$ | async);
-     Merhaba, {{ user?.id }}
+  <div class="user-info" *ngIf="user$ | async">
+    Merhaba, {{ authService.username }}
+    <br />
     <button (click)="logout()">Çıkış Yap</button>
+    <br />
+    <a routerLink="/">Ana sayfaya dön</a>
   </div>
 
   <p class="error-message" *ngIf="(error$ | async)">

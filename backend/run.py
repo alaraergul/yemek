@@ -106,9 +106,8 @@ def create_new_user():
       return {"code": 403, "message": "This user already exists."}
 
   ref = ref.push(request.json)
-  id = ref.key()
 
-  return {"id": id, "weight": request.json["weight"]}
+  return {"id": ref.key, "weight": request.json["weight"]}
 
 @app.route("/users/login", methods = ["POST"])
 def check_user_credientals():

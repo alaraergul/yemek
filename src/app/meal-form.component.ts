@@ -48,7 +48,7 @@ export class MealFormComponent implements OnInit {
   }
 
   get user$() {
-    return this.authService.getUser()
+    return this.authService.user$;
   }
 
   async loadEntries(): Promise<void> {

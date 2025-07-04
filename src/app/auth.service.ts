@@ -18,6 +18,7 @@ export interface Error {
 export class AuthService {
   public isLogged$: BehaviorSubject<boolean> = new BehaviorSubject(false);
   public user$: Promise<User | null> = Promise.resolve(null);
+  public username?: string;
   public error$?: Promise<Error>;
 
   constructor(private http: HttpClient) {}
@@ -37,6 +38,7 @@ export class AuthService {
           }
 
           this.user$ = Promise.resolve(response as User);
+          this.username = username;
           this.isLogged$.next(true);
           resolve(true);
         });
@@ -44,10 +46,6 @@ export class AuthService {
         resolve(false);
       }
     });
-  }
-
-  async getUser() {
-    return await this.user$;
   }
 
   register(username: string, password: string, weight: number){
@@ -59,7 +57,9 @@ export class AuthService {
         return;
       }
 
+      this.username = username;
       this.user$ = Promise.resolve(response as User);
+      this.isLogged$.next(true);
       document.cookie = `username=${username};expires=Thu, 01 Jan 2099 12:00:00 UTC`;
       document.cookie = `password=${password};expires=Thu, 01 Jan 2099 12:00:00 UTC`;
     });
@@ -74,7 +74,9 @@ export class AuthService {
         return;
       }
 
+      this.username = username;
       this.user$ = Promise.resolve(response as User);
+      this.isLogged$.next(true);
       document.cookie = `username=${username};expires=Thu, 01 Jan 2099 12:00:00 UTC`;
       document.cookie = `password=${password};expires=Thu, 01 Jan 2099 12:00:00 UTC`;
     });

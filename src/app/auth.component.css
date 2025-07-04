@@ -6,7 +6,7 @@ body {
 }
 
 .auth-container {
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Poppins', sans-serif !important;
     max-width: 400px;
     margin: 60px auto;
     padding: 30px;
@@ -14,6 +14,10 @@ body {
     border-radius: 16px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
 
+}
+
+* {
+  font-family: 'Poppins', sans-serif;
 }
 
 .tabs {
@@ -108,35 +112,39 @@ button[type="submit"]:hover {
 
 }
 
-
-/*
 .user-info {
-    margin-top: ;
-    text-align: ;
-    font-size: ;
-    background-color: ;
-    padding: ;
-    border-radius: ;
-    color: ;
-    margin-bottom: ;
-
-}
-    */
-
-
-
-/*
-
-.error {
-
-    background-color: 
-    color: 
-    padding: 
-    border-radius: 
-    text-align: 
-    font-weight: 
-    box-shadow: ??
-
+  text-align: center;
 }
 
-*/
+.user-info button {
+  padding: 6px;
+  font-size: 16px;
+  background-color: rgb(255, 38, 0);
+  color: white;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.user-info a {
+  text-decoration: none;
+  background-color: #1976d2;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 16px;
+  margin-top: 10px;
+  color: white;
+  display: inline-block;
+}
+
+.user-info a:hover {
+  transform: scale(1.1);
+  transition: all 0.3s;
+  background-color: #155fa8;
+}
+
+.user-info button:hover {
+  transform: scale(1.1);
+  transition: all 0.3s;
+  background-color: rgb(245, 0, 0);
+}
