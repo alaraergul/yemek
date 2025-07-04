@@ -9,8 +9,7 @@
   <input (input)="onTimestampInput($event)"
     [value]="`${today.getFullYear()}-${addZero(today.getMonth() + 1)}-${addZero(today.getDate())}T${addZero(today.getHours())}:${addZero(today.getMinutes())}`"
     [max]="`${today.getFullYear()}-${addZero(today.getMonth() + 1)}-${addZero(today.getDate())}T${addZero(today.getHours())}:${addZero(today.getMinutes())}`"
-    type="datetime-local"
-  />
+    type="datetime-local" />
 
   <label for="count">Yediğiniz porsiyon sayısı:</label>
   <input [(ngModel)]="currentMealEntry.count" type="number" />
@@ -21,17 +20,18 @@
   </select>
 
   <div>
-    <button (click)="addMeal()" [disabled]="!currentMealEntry.meal || currentMealEntry.count === null || !currentMealEntry.timestamp">
+    <button (click)="addMeal()"
+      [disabled]="!currentMealEntry.meal || currentMealEntry.count === null || !currentMealEntry.timestamp">
       <i class="fas fa-plus-circle"></i> Ekle
     </button>
 
     <hr />
-    @let monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+    @let monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim",
+    "Kasım", "Aralık"];
 
     <input (input)="onDateInput($event)" type="date"
       [value]="`${date.year}-${addZero(date.month + 1)}-${addZero(date.day)}`"
-      [max]="`${today.getFullYear()}-${addZero(today.getMonth() + 1)}-${addZero(today.getDate())}`"
-    />
+      [max]="`${today.getFullYear()}-${addZero(today.getMonth() + 1)}-${addZero(today.getDate())}`" />
     <h3>{{ addZero(date.day) }} {{ monthNames[date.month] }} {{ date.year }} için alınmış pürin bilgisi</h3>
 
     <button class="reset-button" (click)="resetMealsByDate()">
@@ -51,19 +51,19 @@
         @let consumedAt = createDateFrom(entry.timestamp);
         <td>{{ entry.meal.name }}</td>
         <td>{{ entry.count }}</td>
-        <td>{{ addZero(consumedAt.getHours()) }}:{{ addZero(consumedAt.getMinutes()) }}:{{ addZero(consumedAt.getSeconds()) }}</td>
+        <td>{{ addZero(consumedAt.getHours()) }}:{{ addZero(consumedAt.getMinutes()) }}:{{
+          addZero(consumedAt.getSeconds()) }}</td>
         <td>{{ entry.meal.purine * entry.count }}</td>
       </tr>
     </table>
 
     <div>
       @let takenPurineOfToday = getTotalPurine(dataByDate);
-      @let takenPurine = getTotalPurine(data);
 
       <p><strong>Günlük Toplam Pürin:</strong> {{ takenPurineOfToday }} mg</p>
       <p><strong>Yorum:</strong> {{ getComment(takenPurineOfToday) }}</p>
       <br />
-      <p><strong>Toplam Pürin:</strong> {{ takenPurine }} mg</p>
-      <p><strong>Yorum:</strong> {{ getComment(takenPurine) }}</p>
+      <p><strong>Haftalık Pürin:</strong> {{ getWeeklyPurine(data) }} mg</p>
+      <p><strong>Yorum:</strong> {{ getWeeklyComment(data) }}</p>
     </div>
   </div>

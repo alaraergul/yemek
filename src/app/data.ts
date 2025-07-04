@@ -177,6 +177,62 @@ export const meals: Meal[] = [
     name: "Yulaf ezmesi",
     purine: 70,
     quantity: 100
-  }
+  },
+
+  {
+    id: 28,
+    name: "Kabak (pişmiş)",
+    purine: 7,
+    quantity: 100
+  },
+
+  {
+    id: 29,
+    name: "Patlıcan (pişmiş)",
+    purine: 8,
+    quantity: 100
+  },
+
+{
+    id: 30,
+    name: "Domates (çiğ)",
+    purine: 5,
+    quantity: 100
+  },
+
+  {
+    id: 31,
+    name: "Salatalık (çiğ)",
+    purine: 3,
+    quantity: 100
+  },
+
+{
+    id: 32,
+    name: "Biber (çiğ)",
+    purine: 5,
+    quantity: 100
+  },
+
+  {
+    id: 33,
+    name: "Tam buğday ekmeği",
+    purine: 15,
+    quantity: 100
+  },
+
+  {
+    id: 34,
+    name: "Labne",
+    purine: 8,
+    quantity: 100
+  },
+
+  {
+    id: 35,
+    name: "Zeytin(yeşil/siyah)",
+    purine: 5,
+    quantity: 100
+  },
 ];
 

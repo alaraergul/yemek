@@ -29,7 +29,7 @@ export class MealFormComponent implements OnInit {
     meal: meals[0]
   };
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   async ngOnInit(): Promise<void> {
     await this.loadId();
@@ -67,7 +67,7 @@ export class MealFormComponent implements OnInit {
   }
 
   async loadEntries(): Promise<void> {
-    this.http.get<({id: number, count: number, timestamp: number})[]>(`${API_URL}/users/${await this.userId}`).subscribe((response) => {
+    this.http.get<({ id: number, count: number, timestamp: number })[]>(`${API_URL}/users/${await this.userId}`).subscribe((response) => {
       const entries: MealEntry[] = [];
 
       for (const value of response) {
@@ -152,15 +152,15 @@ export class MealFormComponent implements OnInit {
   }
 
   getTotalPurine(data: MealEntry[]): number {
-    return data.reduce((total, entry) => {
-      const m = meals.find(meal => meal.id === entry.meal.id || meal.id === entry.meal?.id);
-      return m ? total + (entry.count * m.purine) : total;
-    }, 0);
+
+    return data.reduce((sum, value) => sum + (value.count * value.meal.purine), 0);
+
   }
 
+
   getComment(purineAmount: number): string {
-    if (purineAmount < 200) return "Harika! Düşük pürin aldınız.";
-    else if (purineAmount < 400) return "İyi gidiyorsunuz ama dikkatli olun.";
+    if (purineAmount < 150) return "Harika! Düşük pürin aldınız.";
+    else if (purineAmount < 300) return "İyi gidiyorsunuz ama dikkatli olun.";
     else return "Dikkat! Bugünkü pürin alımı yüksek.";
   }
 
@@ -168,6 +168,35 @@ export class MealFormComponent implements OnInit {
     const mealId = Number((event.target as HTMLSelectElement).value);
     const selected = meals.find(m => m.id === mealId);
     if (selected) this.currentMealEntry.meal = selected;
+  }
+
+  getWeeklyPurine(data: MealEntry[]): number {
+    const now = new Date();
+
+    const day = now.getDay();
+    const diffToMonday = (day === 0 ? -6 : 1) - day;
+
+    const monday = new Date(now);
+    monday.setDate(now.getDate() + diffToMonday);
+    monday.setHours(0, 0, 0, 0);
+
+    const sunday = new Date(now);
+    sunday.setDate(sunday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+
+    const mondayTime = monday.getTime();
+    const sundayTime = sunday.getTime();
+
+    const weeklyEntries = data.filter(entry => entry.timestamp >= mondayTime && entry.timestamp <= sundayTime);
+    return weeklyEntries.reduce((sum, entry) => sum + (entry.count * entry.meal.purine), 0);
+
+  }
+
+  getWeeklyComment(data: MealEntry[]): string {
+    const total = this.getWeeklyPurine(data);
+    const limit = 2000;
+    if (total <= limit) return "Haftalık pürin alımınız sağlıklı sınırlarda.";
+    return `Dikkat! Bu hafta ${total} mg pürin aldınız. Bu miktar önerilen sınırı (${limit} mg) aşıyor.`;
   }
 
   onTimestampInput(event: Event): void {
