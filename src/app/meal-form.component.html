@@ -1,8 +1,7 @@
-@let userId = (userId$ | async);
 @let data = (data$ | async);
 
 <div class="meal-form">
-  <div *ngIf="userId; then gotData; else pleaseLogin"></div>
+  <div *ngIf="(authService.isLogged$ | async); then gotData; else pleaseLogin"></div>
 
   <ng-template #pleaseLogin>
     <div class="login">
@@ -57,6 +56,8 @@
             <th>Porsiyon sayısı</th>
             <th>Saat</th>
             <th>Pürin miktarı</th>
+            <th>Şeker miktarı</th>
+            <th>kcal</th>
           </tr>
 
           <tr *ngFor="let entry of dataByDate">
@@ -65,7 +66,9 @@
             <td>{{ entry.count }}</td>
             <td>{{ addZero(consumedAt.getHours()) }}:{{ addZero(consumedAt.getMinutes()) }}:{{
               addZero(consumedAt.getSeconds()) }}</td>
-            <td>{{ entry.meal.purine * entry.count }}</td>
+            <td>{{ entry.meal.purine * entry.count }} mg</td>
+            <td>{{ entry.meal.sugar * entry.count }} g</td>
+            <td>{{ entry.meal.kcal * entry.count }}</td>
           </tr>
         </table>
 

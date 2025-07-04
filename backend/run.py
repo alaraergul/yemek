@@ -23,7 +23,7 @@ def check_is_valid_json(req: Request, element_count: int):
 
   return ""
 
-@app.route("/users/<int:user_id>", methods = ["POST"])
+@app.route("/users/<user_id>", methods = ["POST"])
 def post_meal(user_id):
   ref = db.reference(f"/{user_id}")
 
@@ -42,7 +42,7 @@ def post_meal(user_id):
   ref.push(request.json)
   return ""
 
-@app.route("/users/<int:user_id>", methods = ["GET"])
+@app.route("/users/<user_id>", methods = ["GET"])
 def get_meal(user_id):
   ref = db.reference(f"/{user_id}")
   data: dict = ref.get()
@@ -52,7 +52,7 @@ def get_meal(user_id):
   else:
     return list(data.values())
 
-@app.route("/users/<int:user_id>", methods = ["DELETE"])
+@app.route("/users/<user_id>", methods = ["DELETE"])
 def delete_meal(user_id):
   if (error := check_is_valid_json(request, 2)) != "":
     return error
@@ -86,7 +86,7 @@ def get_users():
 
 @app.route("/users/register", methods = ["POST"])
 def create_new_user():
-  if (error := check_is_valid_json(request, 2)) != "":
+  if (error := check_is_valid_json(request, 3)) != "":
     return error
 
   if not "username" in request.json or not isinstance(request.json["username"], str):
@@ -96,12 +96,19 @@ def create_new_user():
     return {"code": 400, "message": "Body must contain \"password\" key and it must be a string."}
 
   if not "weight" in request.json or not isinstance(request.json["weight"], int):
-    return {"code": 400, "message": "Body must contain \"password\" key and it must be a string."}
+    return {"code": 400, "message": "Body must contain \"weight\" key and it must be a string."}
 
   ref = db.reference("/users")
-  ref = ref.push(request.json)
+  ref_dict: dict = ref.get();
 
-  return {"id": ref.key(), "weight": request.json["weight"]}
+  for key, value in ref_dict.items():
+    if value["username"] == request.json["username"]:
+      return {"code": 403, "message": "This user already exists."}
+
+  ref = ref.push(request.json)
+  id = ref.key()
+
+  return {"id": id, "weight": request.json["weight"]}
 
 @app.route("/users/login", methods = ["POST"])
 def check_user_credientals():

@@ -35,6 +35,7 @@ export class MealFormComponent implements OnInit {
   constructor(private http: HttpClient) { }
 
   async ngOnInit(): Promise<void> {
+    await this.authService.initialize();
     await this.loadEntries();
   }
 
@@ -46,13 +47,15 @@ export class MealFormComponent implements OnInit {
     return value.toString().padStart(2, "0")
   }
 
-  get userId$() {
-    return this.authService.user$?.then((user) => user.id);
+  get user$() {
+    return this.authService.getUser()
   }
 
   async loadEntries(): Promise<void> {
-    if (await this.userId$) {
-      this.http.get<({ id: number, count: number, timestamp: number })[]>(`${API_URL}/users/${await this.userId$}`).subscribe((response) => {
+    if (await this.authService.isLogged$) {
+      this.data$ = Promise.resolve([]);
+
+      this.http.get<({ id: number, count: number, timestamp: number })[]>(`${API_URL}/users/${(await this.user$)?.id}`).subscribe((response) => {
         const entries: MealEntry[] = [];
 
         for (const value of response) {
@@ -87,7 +90,7 @@ export class MealFormComponent implements OnInit {
       timestamp
     };
 
-    await fetch(`${API_URL}/users/${await this.userId$}`, {
+    await fetch(`${API_URL}/users/${(await this.user$)?.id}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -110,7 +113,7 @@ export class MealFormComponent implements OnInit {
     const entriesByDate = this.getEntriesOfDate(data);
 
     for (const entry of entriesByDate) {
-      await fetch(`${API_URL}/users/${await this.userId$}`, {
+      await fetch(`${API_URL}/users/${(await this.user$)?.id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -138,9 +141,7 @@ export class MealFormComponent implements OnInit {
   }
 
   getTotalPurine(data: MealEntry[]): number {
-
     return data.reduce((sum, value) => sum + (value.count * value.meal.purine), 0);
-
   }
 
 
