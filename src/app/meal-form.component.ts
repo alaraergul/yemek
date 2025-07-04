@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { Meal, MealEntry, meals, Nullable } from './data';
 import { AuthService } from './auth.service';
 import { RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 
 const API_URL = "http://localhost:5000";
 
@@ -32,7 +33,7 @@ export class MealFormComponent implements OnInit {
     meal: meals[0]
   };
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private router: Router) { }
 
   async ngOnInit(): Promise<void> {
     await this.authService.initialize();
@@ -196,4 +197,15 @@ export class MealFormComponent implements OnInit {
     this.date.month = date.getMonth();
     this.date.year = date.getFullYear();
   }
+
+logout(): void {
+  this.authService.logout();
+  this.router.navigate(['/auth']);
 }
+
+}
+
+
+
+
+

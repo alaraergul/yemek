@@ -14,6 +14,10 @@
     <div *ngIf="data">
       @let dataByDate = getEntriesOfDate(data);
 
+      <div style="text-align: right; margin-bottom: 16px;">
+  <button class="logout-button" (click)="logout()">Çıkış Yap</button>
+</div>
+
       <h2>🍽️ Saat ve Yemek Seç!</h2>
 
       <label for="time">Saat:</label>
@@ -82,6 +86,10 @@
           <p><strong>Yorum:</strong> {{ getWeeklyComment(data) }}</p>
         </div>
       </div>
+
+    
+
+
     </div>
   </ng-template>
 </div>
