@@ -111,7 +111,8 @@ hr {
   border-top: 2px dashed #bbb;
 }
 
-h3, h4 {
+h3,
+h4 {
   color: #333;
   font-weight: 600;
   margin-bottom: 12px;
@@ -137,7 +138,8 @@ table {
   margin: auto;
 }
 
-th, td {
+th,
+td {
   padding: 0 25px;
 }
 
@@ -151,11 +153,7 @@ td {
 
 .logout-button {
 
-width: auto;
-background: linear-gradient(to right);
-
-
-
-
+  width: auto;
+  background: linear-gradient(to right);
 
 }
