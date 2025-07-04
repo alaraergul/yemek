@@ -1,7 +1,7 @@
 import { Component, inject, OnInit } from "@angular/core";
 import { AuthService } from "./auth.service";
 import { CommonModule } from "@angular/common";
-import { RouterLink } from "@angular/router";
+import { Router, RouterLink } from "@angular/router";
 
 enum Tabs {
   LOGIN,
@@ -19,12 +19,16 @@ export class AuthComponent implements OnInit {
   activeTab: Tabs = Tabs.LOGIN;
   Tabs = Tabs;
 
+  constructor(private router: Router) {}
+
   async ngOnInit() {
     await this.authService.initialize();
   }
 
   login(username: string, password: string) {
-    this.authService.login(username, password);
+    this.authService.login(username, password).then(async (result) => {
+      if (result) this.router.navigate(["/"]);
+    });
   }
 
   register(username: string, password: string, weight: number) {

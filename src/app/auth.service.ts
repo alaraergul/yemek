@@ -68,17 +68,20 @@ export class AuthService {
   login(username: string, password: string) {
     this.error$ = undefined;
 
-    this.http.post<User | Error>(`${API_URL}/users/login`, {username, password}).subscribe(response => {
-      if ((response as Error).code) {
-        this.error$ = Promise.resolve(response as Error);
-        return;
-      }
+    return new Promise((resolve) => {
+      this.http.post<User | Error>(`${API_URL}/users/login`, {username, password}).subscribe(response => {
+        if ((response as Error).code) {
+          this.error$ = Promise.resolve(response as Error);
+          return resolve(false);
+        }
 
-      this.username = username;
-      this.user$ = Promise.resolve(response as User);
-      this.isLogged$.next(true);
-      document.cookie = `username=${username};expires=Thu, 01 Jan 2099 12:00:00 UTC`;
-      document.cookie = `password=${password};expires=Thu, 01 Jan 2099 12:00:00 UTC`;
+        this.username = username;
+        this.user$ = Promise.resolve(response as User);
+        this.isLogged$.next(true);
+        document.cookie = `username=${username};expires=Thu, 01 Jan 2099 12:00:00 UTC`;
+        document.cookie = `password=${password};expires=Thu, 01 Jan 2099 12:00:00 UTC`;
+        return resolve(true);
+      });
     });
   }
 
