@@ -27,10 +27,6 @@
           [max]="`${today.getFullYear()}-${addZero(today.getMonth() + 1)}-${addZero(today.getDate())}`" />
         <h3>{{ addZero(date.day) }} {{ monthNames[date.month] }} {{ date.year }} için alınmış pürin bilgisi</h3>
 
-        <button class="reset-button" (click)="resetMealsByDate()">
-          <i class="fas fa-trash"></i> Günü Sıfırla
-        </button>
-
         <h4><strong>Tüketilen yiyecekler</strong></h4>
         <table>
           <tr>
@@ -39,7 +35,7 @@
             <th>Saat</th>
             <th>Pürin miktarı</th>
             <th>Şeker miktarı</th>
-            <th>kcal</th>
+            <th>Kcal</th>
             <th>Sil</th>
           </tr>
 
@@ -58,7 +54,7 @@
 
         <div>
           @let takenPurineOfToday = getTotalPurine(dataByDate);
-
+<br>
           <p><strong>Günlük Toplam Pürin:</strong> {{ takenPurineOfToday }} mg</p>
           <p><strong>Yorum:</strong> {{ getComment(takenPurineOfToday) }}</p>
           <br />
@@ -69,7 +65,7 @@
 
         <hr />
 
-        <h2>🍽️ Saat ve Yemek Seç!</h2>
+        <h3>🍽️ Saat ve Yemek Seç!</h3>
 
               <label for="time">Saat:</label>
       <input (input)="onTimestampInput($event)"
