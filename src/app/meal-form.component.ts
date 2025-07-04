@@ -103,9 +103,9 @@ export class MealFormComponent implements OnInit {
     this.data$ = Promise.resolve(data);
 
     this.currentMealEntry = {
-      timestamp: null,
-      count: null,
-      meal: null
+      timestamp: this.today.getTime(),
+      count: 1,
+      meal: meals[0]
     };
   }
 
