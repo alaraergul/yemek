@@ -1,10 +1,10 @@
 import { Component } from '@angular/core';
-import { MealFormComponent } from './meal-form.component';
+import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [MealFormComponent],
+  imports: [RouterOutlet],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

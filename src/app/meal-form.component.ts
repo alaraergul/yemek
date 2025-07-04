@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Meal, MealEntry, meals, Nullable } from './data';
+import { AuthService } from './auth.service';
 
 const API_URL = "http://localhost:5000";
 
@@ -14,7 +15,8 @@ const API_URL = "http://localhost:5000";
   styleUrls: ['./meal-form.component.css']
 })
 export class MealFormComponent implements OnInit {
-  userId: Promise<number | null> = Promise.resolve(null);
+  authService = inject(AuthService);
+
   data$: Promise<MealEntry[]> = Promise.resolve([]);
   today = new Date();
   date = {
@@ -32,7 +34,6 @@ export class MealFormComponent implements OnInit {
   constructor(private http: HttpClient) { }
 
   async ngOnInit(): Promise<void> {
-    await this.loadId();
     await this.loadEntries();
   }
 
@@ -44,26 +45,8 @@ export class MealFormComponent implements OnInit {
     return value.toString().padStart(2, "0")
   }
 
-  async loadId(): Promise<void> {
-    let id = localStorage.getItem("id");
-
-    if (id) {
-      this.userId = Promise.resolve(parseInt(id));
-      return;
-    }
-
-    this.http.get<string[]>(`${API_URL}/users`).subscribe(response => {
-      const res = response.map((value) => parseInt(value));
-      let value;
-
-      do {
-        value = Math.floor(Math.random() * 10000);
-      } while (res.includes(value));
-
-      id = value.toString();
-      localStorage.setItem("id", id);
-      this.userId = Promise.resolve(value);
-    });
+  get userId() {
+    return this.authService.user$?.then((user) => user.id);
   }
 
   async loadEntries(): Promise<void> {
