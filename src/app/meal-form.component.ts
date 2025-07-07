@@ -213,7 +213,7 @@ export class MealFormComponent implements OnInit {
 
 logout(): void {
   this.authService.logout();
-  this.router.navigate(['/auth']);
+  this.router.navigate(['/purin/auth']);
 }
 
 }

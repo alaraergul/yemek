@@ -27,7 +27,7 @@ export class AuthComponent implements OnInit {
 
   login(username: string, password: string) {
     this.authService.login(username, password).then(async (result) => {
-      if (result) this.router.navigate(["/"]);
+      if (result) this.router.navigate(["/purin"]);
     });
   }
 
