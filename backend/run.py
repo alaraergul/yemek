@@ -14,7 +14,7 @@ firebase = initialize_app(cred, {
   "databaseURL": getenv("FIREBASE_URL")
 })
 
-@app.route("/purin")
+@app.route("/")
 def home():
     return render_template('index.html')
 
@@ -27,7 +27,7 @@ def check_is_valid_json(req: Request, element_count: int):
 
   return ""
 
-@app.route("/purin/users/<user_id>", methods = ["POST"])
+@app.route("/users/<user_id>", methods = ["POST"])
 def post_meal(user_id):
   ref = db.reference(f"/{user_id}")
 
@@ -46,7 +46,7 @@ def post_meal(user_id):
   ref.push(request.json)
   return ""
 
-@app.route("/purin/users/<user_id>", methods = ["GET"])
+@app.route("/users/<user_id>", methods = ["GET"])
 def get_meal(user_id):
   ref = db.reference(f"/{user_id}")
   data: dict = ref.get()
@@ -56,7 +56,7 @@ def get_meal(user_id):
   else:
     return list(data.values())
 
-@app.route("/purin/users/<user_id>", methods = ["DELETE"])
+@app.route("/users/<user_id>", methods = ["DELETE"])
 def delete_meal(user_id):
   if (error := check_is_valid_json(request, 2)) != "":
     return error
@@ -78,7 +78,7 @@ def delete_meal(user_id):
   ref.set(new_data)
   return ""
 
-@app.route("/purin/users", methods = ["GET"])
+@app.route("/users", methods = ["GET"])
 def get_users():
   ref = db.reference("/users")
   data: dict = ref.get()
@@ -88,7 +88,7 @@ def get_users():
   else:
     return list(data.keys())
 
-@app.route("/purin/users/register", methods = ["POST"])
+@app.route("/users/register", methods = ["POST"])
 def create_new_user():
   if (error := check_is_valid_json(request, 3)) != "":
     return error
@@ -113,7 +113,7 @@ def create_new_user():
 
   return {"id": ref.key, "weight": request.json["weight"]}
 
-@app.route("/purin/users/login", methods = ["POST"])
+@app.route("/users/login", methods = ["POST"])
 def check_user_credientals():
   if (error := check_is_valid_json(request, 2)) != "":
     return error
@@ -138,4 +138,4 @@ def check_user_credientals():
   return {"code": 403, "message": "Wrong credientals"}
 
 if __name__ == "__main__":
-  app.run(port = 8000)
+  app.run(port = 8087, host = "0.0.0.0")

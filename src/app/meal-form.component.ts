@@ -53,7 +53,7 @@ export class MealFormComponent implements OnInit {
   }
 
   async loadEntries(): Promise<void> {
-    if (await this.authService.isLogged$) {
+    if (this.authService.isLogged$.getValue()) {
       this.data$ = Promise.resolve([]);
 
       this.http.get<({ id: number, count: number, timestamp: number })[]>(`${API_URL}/users/${(await this.user$)?.id}`).subscribe((response) => {
