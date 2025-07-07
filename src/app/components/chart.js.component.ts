@@ -64,7 +64,7 @@ export class ChartComponent implements OnInit {
 
     const sunday = new Date(now);
     sunday.setDate(sunday.getDate() + 6);
-    monday.setHours(23, 59, 59, 999);
+    sunday.setHours(23, 59, 59, 999);
 
     if (data) {
       const days = Array(7).fill(0);
