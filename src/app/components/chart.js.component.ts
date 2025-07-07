@@ -36,11 +36,27 @@ export class ChartComponent implements OnInit {
     datasets: [
       {
         data: [],
-        label: 'Series A',
+        label: 'Pürin',
         fill: true,
         tension: 0.5,
         borderColor: 'black',
         backgroundColor: 'rgba(255,0,0,0.3)'
+      },
+      {
+        data: [],
+        label: 'Şeker',
+        fill: true,
+        tension: 0.5,
+        borderColor: 'black',
+        backgroundColor: 'rgba(0, 255, 0, 0.3)'
+      },
+      {
+        data: [],
+        label: 'kcal',
+        fill: true,
+        tension: 0.5,
+        borderColor: 'black',
+        backgroundColor: 'rgba(17, 0, 255, 0.3)'
       }
     ]
   };
@@ -67,14 +83,19 @@ export class ChartComponent implements OnInit {
     sunday.setHours(23, 59, 59, 999);
 
     if (data) {
-      const days = Array(7).fill(0);
+      const purine = Array(7).fill(0);
+      const sugar = Array(7).fill(0);
+      const kcal = Array(7).fill(0);
+
       const _data = data.filter((entry) => monday.getTime() <= entry.timestamp && entry.timestamp <= sunday.getTime());
 
       for (const entry of _data) {
         const value = new Date(entry.timestamp);
         const localDay = new Date(value.getFullYear(), value.getMonth(), value.getDate()).getDay();
         const index = localDay === 0 ? 6 : localDay - 1;
-        days[index] += entry.meal.purine * entry.count;
+        purine[index] += entry.meal.purine * entry.count;
+        sugar[index] += entry.meal.sugar * entry.count;
+        kcal[index] += entry.meal.kcal * entry.count;
       }
 
 
@@ -82,7 +103,16 @@ export class ChartComponent implements OnInit {
         ...this.lineChartData,
         datasets: [
           {
-            data: days
+            ...this.lineChartData.datasets[0],
+            data: purine
+          },
+          {
+            ...this.lineChartData.datasets[1],
+            data: sugar
+          },
+          {
+            ...this.lineChartData.datasets[2],
+            data: kcal
           }
         ]
       };
