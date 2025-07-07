@@ -144,7 +144,7 @@ export class MealFormComponent implements OnInit {
   }
 
   getAllMeals(): Meal[] {
-    return meals;
+    return meals.slice().sort((a,b) => a.name.localeCompare(b.name))
   }
 
   getEntriesOfDate(data: MealEntry[]): MealEntry[] {
