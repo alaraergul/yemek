@@ -26,6 +26,8 @@ export class AuthService {
   async initialize() {
     return new Promise((resolve) => {
       if (typeof document !== "undefined" && document.cookie) {
+        if (!document.cookie.split("username=")[1] || !document.cookie.split("password=")[1]) return resolve(false);
+
         const username = document.cookie.split("username=")[1].split(";")[0];
         const password = document.cookie.split("password=")[1].split(";")[0];
 
