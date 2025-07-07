@@ -19,7 +19,7 @@
       </div>
         @let monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
 
-        <app-chart [data]="data$"></app-chart>
+        <app-chart [data]="data$" [date]="date"></app-chart>
 
         <input (input)="onDateInput($event)" type="date"
           [value]="`${date.year}-${addZero(date.month + 1)}-${addZero(date.day)}`"

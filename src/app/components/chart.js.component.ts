@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnChanges, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartOptions, ChartType } from 'chart.js';
@@ -9,7 +9,7 @@ import { MealEntry } from '../data';
   standalone: true,
   imports: [CommonModule, BaseChartDirective],
   template: `
-    <div style="width: 80%; max-width: 400px; height: 300px; margin: auto;">
+    <div style="width: 100%; max-width: 400px; height: 300px; margin: auto;">
   <canvas baseChart
     [type]="'line'"
     [data]="lineChartData"
@@ -20,8 +20,13 @@ import { MealEntry } from '../data';
 
   `
 })
-export class ChartComponent implements OnInit {
+export class ChartComponent implements OnChanges {
   @Input("data") data: Promise<MealEntry[]> | undefined;
+
+  @Input("date") date: {day: number, month: number, year: number}| undefined;
+
+    public lineChartLegend = true;
+
 
   public lineChartData: ChartConfiguration<"line">["data"] = {
     labels: [
@@ -38,48 +43,99 @@ export class ChartComponent implements OnInit {
         data: [],
         label: 'Pürin',
         fill: true,
-        tension: 0.5,
-        borderColor: 'black',
-        backgroundColor: 'rgba(255,0,0,0.3)'
+        tension: 0.4,
+        borderColor: '#f06292',
+        backgroundColor: 'rgba(250, 98, 146, 0.2)'
       },
       {
         data: [],
         label: 'Şeker',
         fill: true,
-        tension: 0.5,
-        borderColor: 'black',
-        backgroundColor: 'rgba(0, 255, 0, 0.3)'
+        tension: 0.4,
+        borderColor: '#4db6ac',
+        backgroundColor: 'rgba(77, 182, 172, 0.2)'
       },
       {
         data: [],
-        label: 'kcal',
+        label: 'Kcal',
         fill: true,
-        tension: 0.5,
-        borderColor: 'black',
-        backgroundColor: 'rgba(17, 0, 255, 0.3)'
+        tension: 0.4,
+        borderColor: '#9575cd',
+        backgroundColor: 'rgba(149, 117, 205, 0.2)'
       }
     ]
   };
 
   public lineChartOptions: ChartOptions<'line'> = {
     responsive: true,
-    maintainAspectRatio: false
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top',
+        labels: {
+          font: {
+            size: 12
+          }
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: (context) => `${context.dataset.label}: ${context.formattedValue}`
+        }
+      }
+    },
+    elements: {
+      line: {
+        borderWidth: 2
+      },
+      point: {
+        radius: 5,
+        hoverRadius: 7
+      }
+    },
+    scales: {
+      x: {
+        ticks: {
+          font: {
+            size: 12
+          }
+        },
+        grid: {
+          display: false
+        }
+      },
+      y: {
+        beginAtZero: true,
+        ticks: {
+          font: {
+            size: 12
+          }
+        }
+      }
+    }
   };
 
-  public lineChartLegend = false;
+async ngOnChanges(): Promise<void> {
+  const data = await this.data;
 
-  async ngOnInit(): Promise<void> {
-    const data = await this.data;
-    const now = new Date();
-    const day = now.getDay();
-    const diffToMonday = (day === 0 ? -6 : 1) - day;
+  if (!this.date) {
+    return;
+  }
 
-    const monday = new Date(now);
-    monday.setDate(now.getDate() + diffToMonday);
+  const selectedDate = new Date(this.date.year, this.date.month, this.date.day);
+  const dayOfWeek = selectedDate.getDay();
+
+
+    const diffToMonday = (dayOfWeek === 0 ? -6 : 1) - dayOfWeek;
+
+    const monday = new Date(selectedDate);
+
+
+    monday.setDate(selectedDate.getDate() + diffToMonday);
     monday.setHours(0, 0, 0, 0);
 
-    const sunday = new Date(now);
-    sunday.setDate(sunday.getDate() + 6);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
     sunday.setHours(23, 59, 59, 999);
 
     if (data) {
@@ -93,6 +149,8 @@ export class ChartComponent implements OnInit {
         const value = new Date(entry.timestamp);
         const localDay = new Date(value.getFullYear(), value.getMonth(), value.getDate()).getDay();
         const index = localDay === 0 ? 6 : localDay - 1;
+
+
         purine[index] += entry.meal.purine * entry.count;
         sugar[index] += entry.meal.sugar * entry.count;
         kcal[index] += entry.meal.kcal * entry.count;

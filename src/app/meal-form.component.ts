@@ -206,9 +206,11 @@ export class MealFormComponent implements OnInit {
 
   onDateInput(event: Event): void {
     const date = new Date((event.target as HTMLInputElement).value);
-    this.date.day = date.getDate();
-    this.date.month = date.getMonth();
-    this.date.year = date.getFullYear();
+    this.date = {
+      day: date.getDate(),
+      month: date.getMonth(),
+      year: date.getFullYear()
+    };
   }
 
 logout(): void {
