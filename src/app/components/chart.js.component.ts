@@ -72,9 +72,11 @@ export class ChartComponent implements OnInit {
 
       for (const entry of _data) {
         const value = new Date(entry.timestamp);
-
-        days[value.getDay()] += entry.meal.purine * entry.count;
+        const localDay = new Date(value.getFullYear(), value.getMonth(), value.getDate()).getDay();
+        const index = localDay === 0 ? 6 : localDay - 1;
+        days[index] += entry.meal.purine * entry.count;
       }
+
 
       this.lineChartData = {
         ...this.lineChartData,
