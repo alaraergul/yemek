@@ -56,19 +56,7 @@ def get_meals(user_id):
   else:
     return list(data.values())
 
-@app.route("/users/<user_id>", methods = ["GET"])
-def get_user(user_id):
-  ref = db.reference(f"/users/{user_id}")
-  data: dict = ref.get()
-
-  del data["password"]
-
-  if data == None:
-    return {"code": 404, "message": "There is no user."}
-  else:
-    return data
-
-@app.route("/users/<user_id>", methods = ["DELETE"])
+@app.route("/users/<user_id>/meals", methods = ["DELETE"])
 def delete_meal(user_id):
   if (error := check_is_valid_json(request, 2)) != "":
     return error
@@ -100,16 +88,44 @@ def get_users():
   else:
     return list(data.keys())
 
+@app.route("/users/<user_id>", methods = ["GET"])
+def get_user(user_id):
+  ref = db.reference(f"/users/{user_id}")
+  data: dict = ref.get()
+
+  del data["username"]
+  del data["password"]
+
+  if data == None:
+    return {"code": 404, "message": "There is no user."}
+  else:
+    return data
+
 @app.route("/users/<user_id>", methods = ["PATCH"])
 def edit_user(user_id):
   ref = db.reference(f"/users/{user_id}")
   data: dict = ref.get()
 
+  if ("password" in request.json and isinstance(request.json["password"], str)) or ("username" in request.json and isinstance(request.json["username"], str)):
+    return {"code": 403, "message": "Username and password must be existed."}
+
+  if data["password"] != request.json["password"] or data["username"] != request.json["username"]:
+    return {"code": 403, "message": "Username or password do not match."}
+
   if "weight" in request.json and isinstance(request.json["weight"], int):
     data["weight"] = request.json["weight"]
 
-  if "limit" in request.json and isinstance(request.json["limit"], int):
-    data["limit"] = request.json["limit"]
+  if "purineLimit" in request.json and isinstance(request.json["purineLimit"], int):
+    data["purineLimit"] = request.json["purineLimit"]
+
+  if "sugarLimit" in request.json and isinstance(request.json["sugarLimit"], int):
+    data["sugarLimit"] = request.json["sugarLimit"]
+
+  if "kcalLimit" in request.json and isinstance(request.json["kcalLimit"], int):
+    data["kcalLimit"] = request.json["kcalLimit"]
+
+  if "gender" in request.json and isinstance(request.json["gender"], int):
+    data["gender"] = request.json["gender"]
 
   ref.set(data)
 
