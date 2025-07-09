@@ -27,7 +27,7 @@ def check_is_valid_json(req: Request, element_count: int):
 
   return ""
 
-@app.route("/users/<user_id>", methods = ["POST"])
+@app.route("/users/<user_id>/meals", methods = ["POST"])
 def post_meal(user_id):
   ref = db.reference(f"/{user_id}")
 
@@ -46,8 +46,8 @@ def post_meal(user_id):
   ref.push(request.json)
   return ""
 
-@app.route("/users/<user_id>", methods = ["GET"])
-def get_meal(user_id):
+@app.route("/users/<user_id>/meals", methods = ["GET"])
+def get_meals(user_id):
   ref = db.reference(f"/{user_id}")
   data: dict = ref.get()
 
@@ -55,6 +55,18 @@ def get_meal(user_id):
     return list()
   else:
     return list(data.values())
+
+@app.route("/users/<user_id>", methods = ["GET"])
+def get_user(user_id):
+  ref = db.reference(f"/users/{user_id}")
+  data: dict = ref.get()
+
+  del data["password"]
+
+  if data == None:
+    return {"code": 404, "message": "There is no user."}
+  else:
+    return data
 
 @app.route("/users/<user_id>", methods = ["DELETE"])
 def delete_meal(user_id):
@@ -88,6 +100,21 @@ def get_users():
   else:
     return list(data.keys())
 
+@app.route("/users/<user_id>", methods = ["PATCH"])
+def edit_user(user_id):
+  ref = db.reference(f"/users/{user_id}")
+  data: dict = ref.get()
+
+  if "weight" in request.json and isinstance(request.json["weight"], int):
+    data["weight"] = request.json["weight"]
+
+  if "limit" in request.json and isinstance(request.json["limit"], int):
+    data["limit"] = request.json["limit"]
+
+  ref.set(data)
+
+  return ""
+
 @app.route("/users/register", methods = ["POST"])
 def create_new_user():
   if (error := check_is_valid_json(request, 3)) != "":
@@ -103,7 +130,7 @@ def create_new_user():
     return {"code": 400, "message": "Body must contain \"weight\" key and it must be a string."}
 
   ref = db.reference("/users")
-  ref_dict: dict = ref.get();
+  ref_dict: dict = ref.get()
 
   for key, value in ref_dict.items():
     if value["username"] == request.json["username"]:
@@ -111,7 +138,7 @@ def create_new_user():
 
   ref = ref.push(request.json)
 
-  return {"id": ref.key, "weight": request.json["weight"]}
+  return {"id": ref.key, "weight": request.json["weight"], "limit": -1}
 
 @app.route("/users/login", methods = ["POST"])
 def check_user_credientals():
