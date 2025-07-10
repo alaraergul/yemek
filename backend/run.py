@@ -106,7 +106,7 @@ def edit_user(user_id):
   ref = db.reference(f"/users/{user_id}")
   data: dict = ref.get()
 
-  if ("password" in request.json and isinstance(request.json["password"], str)) or ("username" in request.json and isinstance(request.json["username"], str)):
+  if not ("password" in request.json and isinstance(request.json["password"], str)) or not ("username" in request.json and isinstance(request.json["username"], str)):
     return {"code": 403, "message": "Username and password must be existed."}
 
   if data["password"] != request.json["password"] or data["username"] != request.json["username"]:
