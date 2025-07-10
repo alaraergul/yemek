@@ -133,7 +133,7 @@ def edit_user(user_id):
 
 @app.route("/users/register", methods = ["POST"])
 def create_new_user():
-  if (error := check_is_valid_json(request, 3)) != "":
+  if (error := check_is_valid_json(request, 4)) != "":
     return error
 
   if not "username" in request.json or not isinstance(request.json["username"], str):
@@ -143,7 +143,10 @@ def create_new_user():
     return {"code": 400, "message": "Body must contain \"password\" key and it must be a string."}
 
   if not "weight" in request.json or not isinstance(request.json["weight"], int):
-    return {"code": 400, "message": "Body must contain \"weight\" key and it must be a string."}
+    return {"code": 400, "message": "Body must contain \"weight\" key and it must be a number."}
+
+  if not "gender" in request.json or not isinstance(request.json["gender"], int):
+    return {"code": 400, "message": "Body must contain \"gender\" key and it must be a number."}
 
   ref = db.reference("/users")
   ref_dict: dict = ref.get()
@@ -154,7 +157,7 @@ def create_new_user():
 
   ref = ref.push(request.json)
 
-  return {"id": ref.key, "weight": request.json["weight"], "limit": -1}
+  return {"id": ref.key, "weight": request.json["weight"], "gender": request.json["gender"]}
 
 @app.route("/users/login", methods = ["POST"])
 def check_user_credientals():
@@ -176,7 +179,10 @@ def check_user_credientals():
 
   for key, value in users.items():
     if value["username"] == request.json["username"] and value["password"] == request.json["password"]:
-      return {"id": key, "weight": value["weight"]}
+      del value["username"]
+      del value["password"]
+
+      return {"id": key, **value}
 
   return {"code": 403, "message": "Wrong credientals"}
 
