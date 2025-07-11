@@ -115,14 +115,23 @@ def edit_user(user_id):
   if "weight" in request.json and isinstance(request.json["weight"], int):
     data["weight"] = request.json["weight"]
 
-  if "purineLimit" in request.json and isinstance(request.json["purineLimit"], int):
-    data["purineLimit"] = request.json["purineLimit"]
+  if "purineLimit" in request.json:
+    if isinstance(request.json["purineLimit"], int):
+      data["purineLimit"] = request.json["purineLimit"]
+    elif request.json["purineLimit"] == None and "purineLimit" in data:
+      del data["purineLimit"]
 
-  if "sugarLimit" in request.json and isinstance(request.json["sugarLimit"], int):
-    data["sugarLimit"] = request.json["sugarLimit"]
+  if "sugarLimit" in request.json:
+    if isinstance(request.json["sugarLimit"], int):
+      data["sugarLimit"] = request.json["sugarLimit"]
+    elif request.json["sugarLimit"] == None and "sugarLimit" in data:
+      del data["sugarLimit"]
 
-  if "kcalLimit" in request.json and isinstance(request.json["kcalLimit"], int):
-    data["kcalLimit"] = request.json["kcalLimit"]
+  if "kcalLimit" in request.json:
+    if isinstance(request.json["kcalLimit"], int):
+      data["kcalLimit"] = request.json["kcalLimit"]
+    elif request.json["kcalLimit"] == None and "kcalLimit" in data:
+      del data["kcalLimit"]
 
   if "gender" in request.json and isinstance(request.json["gender"], int):
     data["gender"] = request.json["gender"]
