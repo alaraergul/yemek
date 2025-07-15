@@ -62,7 +62,7 @@ def post_meal(user_id):
   if not "timestamp" in request.json or not isinstance(request.json["timestamp"], int):
     return {"code": 400, "message": "Body must contain \"timestamp\" key and it must be a number that represents unix timestamp."}
 
-  cur.execute("INSERT INTO Meals(userId, id, timestamp, count) VALUES (%s, %s, to_timestamp(%s), %s)", (
+  cur.execute("INSERT INTO Meals(userId, id, timestamp, count) VALUES (%s, %s, to_timestamp(%s), %s);", (
     user_id, request.json["id"], request.json["timestamp"] / 1000, request.json["count"]
   ))
   conn.commit()
@@ -71,7 +71,7 @@ def post_meal(user_id):
 
 @app.route("/users/<user_id>/meals", methods = ["GET"])
 def get_meals(user_id):
-  cur.execute("SELECT id, count, extract(epoch from timestamp) FROM Meals WHERE userId=%s", (user_id,))
+  cur.execute("SELECT id, count, extract(epoch from timestamp) FROM Meals WHERE userId=%s;", (user_id,))
   meals = cur.fetchmany()
 
   if len(meals) == 0:
@@ -95,7 +95,7 @@ def delete_meal(user_id):
   if not "timestamp" in request.json or not isinstance(request.json["timestamp"], int):
     return {"code": 400, "message": "Body must contain \"timestamp\" key and it must be a number that represents unix timestamp."}
 
-  cur.execute("DELETE FROM Meals WHERE userId=%s AND id=%s AND timestamp=to_timestamp(%s)", (user_id, request.json["id"], request.json["timestamp"] / 1000))
+  cur.execute("DELETE FROM Meals WHERE userId=%s AND id=%s AND timestamp=to_timestamp(%s);", (user_id, request.json["id"], request.json["timestamp"] / 1000))
   conn.commit()
 
   return ""
@@ -109,7 +109,7 @@ def get_users():
 
 @app.route("/users/<user_id>", methods = ["GET"])
 def get_user(user_id):
-  cur.execute(f"SELECT id, purineLimit, kcalLimit, sugarLimit, weight, gender FROM Users WHERE id=%s", (user_id))
+  cur.execute("SELECT id, purineLimit, kcalLimit, sugarLimit, weight, gender FROM Users WHERE id=%s;", (user_id,))
   user = cur.fetchone()
 
   if user == None:
@@ -119,7 +119,7 @@ def get_user(user_id):
 
 @app.route("/users/<user_id>", methods = ["PATCH"])
 def edit_user(user_id):
-  cur.execute("SELECT username, password, weight, gender, purineLimit, sugarLimit, kcalLimit FROM Users WHERE id=%s", (user_id,))
+  cur.execute("SELECT username, password, weight, gender, purineLimit, sugarLimit, kcalLimit FROM Users WHERE id=%s;", (user_id,))
   user = cur.fetchone()
 
   if not ("password" in request.json and isinstance(request.json["password"], str)) or not ("username" in request.json and isinstance(request.json["username"], str)):
@@ -143,25 +143,24 @@ def edit_user(user_id):
     if isinstance(request.json["purineLimit"], int):
       data["purineLimit"] = request.json["purineLimit"]
     elif request.json["purineLimit"] == None and "purineLimit" in data:
-      del data["purineLimit"]
+      data["purineLimit"] = None
 
   if "sugarLimit" in request.json:
     if isinstance(request.json["sugarLimit"], int):
       data["sugarLimit"] = request.json["sugarLimit"]
     elif request.json["sugarLimit"] == None and "sugarLimit" in data:
-      del data["sugarLimit"]
+      data["sugarLimit"] = None
 
   if "kcalLimit" in request.json:
     if isinstance(request.json["kcalLimit"], int):
       data["kcalLimit"] = request.json["kcalLimit"]
     elif request.json["kcalLimit"] == None and "kcalLimit" in data:
-      del data["kcalLimit"]
+      data["kcalLimit"] = None
 
   if "gender" in request.json and isinstance(request.json["gender"], int):
     data["gender"] = request.json["gender"]
 
-  # TODO: Throws an error on null data
-  cur.execute("UPDATE Users SET gender=B'%s', weight=%s, sugarLimit=%s, purineLimit=%s, kcalLimit=%s WHERE id=%s", (
+  cur.execute("UPDATE Users SET gender=B'%s', weight=%s, sugarLimit=%s, purineLimit=%s, kcalLimit=%s WHERE id=%s;", (
     data["gender"], data["weight"], data["sugarLimit"], data["purineLimit"], data["kcalLimit"], user_id
   ))
   conn.commit()
@@ -190,7 +189,7 @@ def create_new_user():
   if cur.fetchone() != None:
     return {"code": 403, "message": "This user already exists."}
 
-  cur.execute("INSERT INTO Users(username, password, gender, weight) VALUES (%s, %s, B'%s', %s) RETURNING id", (
+  cur.execute("INSERT INTO Users(username, password, gender, weight) VALUES (%s, %s, B'%s', %s) RETURNING id;", (
     request.json["username"], request.json["password"], request.json["gender"], request.json["weight"]
   ))
 
@@ -215,7 +214,7 @@ def check_user_credientals():
   if count == 0:
     return {"code": 404, "message": "There is no user"}
 
-  cur.execute("SELECT id, weight, gender, purineLimit, sugarLimit, kcalLimit FROM Users WHERE username=%s AND password=%s", (
+  cur.execute("SELECT id, weight, gender, purineLimit, sugarLimit, kcalLimit FROM Users WHERE username=%s AND password=%s;", (
     request.json["username"], request.json["password"]
   ))
 
