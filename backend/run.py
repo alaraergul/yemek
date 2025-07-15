@@ -50,21 +50,25 @@ def home():
 
 @app.route("/users/<user_id>/meals", methods = ["POST"])
 def post_meal(user_id):
-  if (error := check_is_valid_json(request, 3)) != True:
-    return error
+  if isinstance(request.json, list):
+    return {"code": 400, "message": "Body must be a list."}
 
-  if not "id" in request.json or not isinstance(request.json["id"], int):
-    return {"code": 400, "message": "Body must contain \"id\" key and it must be a number."}
+  for data in request.json:
+    if (error := check_is_valid_json(data, 3)) != True:
+      return error
 
-  if not "count" in request.json or not isinstance(request.json["count"], int):
-    return {"code": 400, "message": "Body must contain \"count\" key and it must be a number."}
+    if not "id" in data or not isinstance(data["id"], int):
+      return {"code": 400, "message": "Data must contain \"id\" key and it must be a number."}
 
-  if not "timestamp" in request.json or not isinstance(request.json["timestamp"], int):
-    return {"code": 400, "message": "Body must contain \"timestamp\" key and it must be a number that represents unix timestamp."}
+    if not "count" in data or not isinstance(data["count"], int):
+      return {"code": 400, "message": "Data must contain \"count\" key and it must be a number."}
 
-  cur.execute("INSERT INTO Meals(userId, id, timestamp, count) VALUES (%s, %s, to_timestamp(%s), %s);", (
-    user_id, request.json["id"], request.json["timestamp"] / 1000, request.json["count"]
-  ))
+    if not "timestamp" in data or not isinstance(data["timestamp"], int):
+      return {"code": 400, "message": "Data must contain \"timestamp\" key and it must be a number that represents unix timestamp."}
+
+  args = ",".join(cur.mogrify("(%s, %s, to_timestamp(%s), %s)", user_id, data["id"], data["timestamp"] / 1000, data["count"]) for data in request.json)
+
+  cur.execute(args)
   conn.commit()
 
   return ""
