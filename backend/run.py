@@ -33,12 +33,16 @@ cur.execute("CREATE TABLE IF NOT EXISTS Meals(" \
 conn.commit()
 
 
-def check_is_valid_json(req: Request, element_count: int):
-  if not req.is_json or not isinstance(req.json, dict):
-    return {"code": 400, "message": "Body must be a JSON object."}
+def check_is_valid_json(data: Request | dict, element_count: int):
+  if isinstance(data, dict):
+    if len(data) != element_count:
+      return {"code": 400, "message": f"Body must contain exactly {element_count} members."}
+  else:
+    if not data.is_json or not isinstance(data.json, dict):
+      return {"code": 400, "message": "Body must be a JSON object."}
 
-  if len(req.json) != element_count:
-    return {"code": 400, "message": f"Body must contain exactly {element_count} members."}
+    if len(data.json) != element_count:
+      return {"code": 400, "message": f"Body must contain exactly {element_count} members."}
 
   return True
 
@@ -50,7 +54,7 @@ def home():
 
 @app.route("/users/<user_id>/meals", methods = ["POST"])
 def post_meal(user_id):
-  if isinstance(request.json, list):
+  if not isinstance(request.json, list):
     return {"code": 400, "message": "Body must be a list."}
 
   for data in request.json:
@@ -66,9 +70,9 @@ def post_meal(user_id):
     if not "timestamp" in data or not isinstance(data["timestamp"], int):
       return {"code": 400, "message": "Data must contain \"timestamp\" key and it must be a number that represents unix timestamp."}
 
-  args = ",".join(cur.mogrify("(%s, %s, to_timestamp(%s), %s)", user_id, data["id"], data["timestamp"] / 1000, data["count"]) for data in request.json)
+  args = b",".join(cur.mogrify("(%s, %s, to_timestamp(%s), %s)", (user_id, data["id"], data["timestamp"] / 1000, data["count"])) for data in request.json).decode("utf-8")
 
-  cur.execute(args)
+  cur.execute(f"INSERT INTO Meals (userId, id, timestamp, count) VALUES {args}")
   conn.commit()
 
   return ""
@@ -76,7 +80,7 @@ def post_meal(user_id):
 @app.route("/users/<user_id>/meals", methods = ["GET"])
 def get_meals(user_id):
   cur.execute("SELECT id, count, extract(epoch from timestamp) FROM Meals WHERE userId=%s;", (user_id,))
-  meals = cur.fetchmany()
+  meals = cur.fetchall()
 
   if len(meals) == 0:
     return list()
