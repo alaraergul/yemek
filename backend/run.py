@@ -30,19 +30,30 @@ cur.execute("CREATE TABLE IF NOT EXISTS Meals(" \
               "count int NOT NULL"
             ");")
 
+cur.execute("CREATE TABLE IF NOT EXISTS WaterConsumption(" \
+              "userId uuid references Users(id)," \
+              "value bit NOT NULL," \
+              "timestamp timestamp NOT NULL"
+            ");")
+
 conn.commit()
 
 
-def check_is_valid_json(data: Request | dict, element_count: int):
-  if isinstance(data, dict):
-    if len(data) != element_count:
-      return {"code": 400, "message": f"Body must contain exactly {element_count} members."}
-  else:
-    if not data.is_json or not isinstance(data.json, dict):
-      return {"code": 400, "message": "Body must be a JSON object."}
+def check_is_valid_request(data: Request, element_count: int):
+  if not data.is_json or not isinstance(data.json, dict):
+    return {"code": 400, "message": "Body must be a JSON object."}
 
-    if len(data.json) != element_count:
-      return {"code": 400, "message": f"Body must contain exactly {element_count} members."}
+  if len(data.json) != element_count:
+    return {"code": 400, "message": f"Body must contain exactly {element_count} members."}
+
+  return True
+
+def check_is_valid_data(data: dict, element_count: int):
+  if not isinstance(data, dict):
+    return {"code": 400, "message": "Body must be a JSON object."}
+
+  if len(data) != element_count:
+    return {"code": 400, "message": f"Body must contain exactly {element_count} members."}
 
   return True
 
@@ -51,6 +62,40 @@ def check_is_valid_json(data: Request | dict, element_count: int):
 def home():
   return render_template('index.html')
 
+@app.route("/users/<user_id>/water_consumption", methods = ["POST"])
+def post_water_consumption(user_id):
+  if (error := check_is_valid_request(request, 2)) != True:
+    return error
+
+  if not "value" in request.json or not isinstance(request.json["value"], int):
+    return {"code": 400, "message": "Body must contain \"value\" key and it must be a number."}
+
+  if not "timestamp" in request.json or not isinstance(request.json["timestamp"], int):
+    return {"code": 400, "message": "Body must contain \"timestamp\" key and it must be a number that represents unix timestamp."}
+
+  cur.execute(
+    "INSERT INTO WaterConsumption (userId, value, timestamp) VALUES (%s, B'%s', to_timestamp(%s))",
+    (user_id, request.json["value"], request.json["timestamp"] / 1000)
+  )
+
+  conn.commit()
+
+  return ""
+
+@app.route("/users/<user_id>/water_consumption", methods = ["GET"])
+def get_water_consumption(user_id):
+  cur.execute("SELECT value, extract(epoch from timestamp) FROM WaterConsumption WHERE userId=%s;", (user_id,))
+  water_consumption = cur.fetchall()
+
+  if len(water_consumption) == 0:
+    return list()
+  else:
+    response = []
+
+    for data in water_consumption:
+      response.append({"value": data[0], "timestamp": int(data[1]) * 1000})
+
+    return response
 
 @app.route("/users/<user_id>/meals", methods = ["POST"])
 def post_meal(user_id):
@@ -58,7 +103,7 @@ def post_meal(user_id):
     return {"code": 400, "message": "Body must be a list."}
 
   for data in request.json:
-    if (error := check_is_valid_json(data, 3)) != True:
+    if (error := check_is_valid_data(data, 3)) != True:
       return error
 
     if not "id" in data or not isinstance(data["id"], int):
@@ -94,7 +139,7 @@ def get_meals(user_id):
 
 @app.route("/users/<user_id>/meals", methods = ["DELETE"])
 def delete_meal(user_id):
-  if (error := check_is_valid_json(request, 2)) != True:
+  if (error := check_is_valid_request(request, 2)) != True:
     return error
 
   if not "id" in request.json or not isinstance(request.json["id"], int):
@@ -177,7 +222,7 @@ def edit_user(user_id):
 
 @app.route("/users/register", methods = ["POST"])
 def create_new_user():
-  if (error := check_is_valid_json(request, 4)) != True:
+  if (error := check_is_valid_request(request, 4)) != True:
     return error
 
   if not "username" in request.json or not isinstance(request.json["username"], str):
@@ -192,7 +237,7 @@ def create_new_user():
   if not "gender" in request.json or not isinstance(request.json["gender"], int):
     return {"code": 400, "message": "Body must contain \"gender\" key and it must be a number."}
 
-  cur.execute(f"SELECT id FROM Users WHERE username='{request.json["username"]}'");
+  cur.execute("SELECT id FROM Users WHERE username=%s", (request.json["username"],))
 
   if cur.fetchone() != None:
     return {"code": 403, "message": "This user already exists."}
@@ -207,7 +252,7 @@ def create_new_user():
 
 @app.route("/users/login", methods = ["POST"])
 def check_user_credientals():
-  if (error := check_is_valid_json(request, 2)) != True:
+  if (error := check_is_valid_request(request, 2)) != True:
     return error
 
   if not "username" in request.json or not isinstance(request.json["username"], str):
