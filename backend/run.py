@@ -21,7 +21,8 @@ def create_database_tables():
                 "sugarLimit float," \
                 "kcalLimit float," \
                 "weight int NOT NULL," \
-                "gender bit NOT NULL"
+                "gender bit NOT NULL," \
+                "language bit NOT NULL"
               ");")
 
   cur.execute("CREATE TABLE IF NOT EXISTS Meals(" \
@@ -67,6 +68,7 @@ def check_is_valid_data(data: dict, element_count: int):
 
   return True
 
+create_database_tables()
 
 @app.route("/")
 def home():
@@ -114,7 +116,9 @@ def add_custom_meal(user_id):
 
 @app.route("/meals/<user_id>", methods = ["GET"])
 def get_addable_meals(user_id):
-  language_id = 0
+  cur.execute("SELECT language FROM Users WHERE id=%s", (user_id,))
+  language = int(cur.fetchone()[0])
+
   data = []
 
   for category in categories:
@@ -123,7 +127,7 @@ def get_addable_meals(user_id):
     for meal in category["meals"]:
       meals.append({
         "id": meal["id"],
-        "name": meal["names"][language_id],
+        "name": meal["names"][language],
         "purine": meal["purine"],
         "kcal": meal["kcal"],
         "quantity": meal["quantity"],
@@ -131,7 +135,7 @@ def get_addable_meals(user_id):
       })
 
     data.append({
-      "name": category["names"][language_id],
+      "name": category["names"][language],
       "meals": meals
     })
 
@@ -202,7 +206,7 @@ def post_meal(user_id):
     if not "id" in data or not isinstance(data["id"], int):
       return {"code": 400, "message": "Data must contain \"id\" key and it must be a number."}
 
-    if not "count" in data or not isinstance(data["count"], float):
+    if not "count" in data or (not isinstance(data["count"], float) and not isinstance(data["count"], int)):
       return {"code": 400, "message": "Data must contain \"count\" key and it must be a number."}
 
     if not "timestamp" in data or not isinstance(data["timestamp"], int):
@@ -302,7 +306,7 @@ def edit_user(user_id):
 
 @app.route("/users/register", methods = ["POST"])
 def create_new_user():
-  if (error := check_is_valid_request(request, 4)) != True:
+  if (error := check_is_valid_request(request, 5)) != True:
     return error
 
   if not "username" in request.json or not isinstance(request.json["username"], str):
@@ -317,18 +321,21 @@ def create_new_user():
   if not "gender" in request.json or not isinstance(request.json["gender"], int):
     return {"code": 400, "message": "Body must contain \"gender\" key and it must be a number."}
 
+  if not "language" in request.json or not isinstance(request.json["language"], int):
+    return {"code": 400, "message": "Body must contain \"language\" key and it must be a number."}
+
   cur.execute("SELECT id FROM Users WHERE username=%s", (request.json["username"],))
 
   if cur.fetchone() != None:
     return {"code": 403, "message": "This user already exists."}
 
-  cur.execute("INSERT INTO Users(username, password, gender, weight) VALUES (%s, %s, B'%s', %s) RETURNING id;", (
-    request.json["username"], request.json["password"], request.json["gender"], request.json["weight"]
+  cur.execute("INSERT INTO Users(username, password, gender, weight, language) VALUES (%s, %s, B'%s', %s, B'%s') RETURNING id;", (
+    request.json["username"], request.json["password"], request.json["gender"], request.json["weight"], request.json["language"]
   ))
 
   conn.commit()
 
-  return {"id": cur.fetchone()[0], "weight": request.json["weight"], "gender": request.json["gender"]}
+  return {"id": cur.fetchone()[0], "weight": request.json["weight"], "gender": request.json["gender"], "language": request.json["language"]}
 
 @app.route("/users/login", methods = ["POST"])
 def check_user_credientals():
@@ -347,7 +354,7 @@ def check_user_credientals():
   if count == 0:
     return {"code": 404, "message": "There is no user"}
 
-  cur.execute("SELECT id, weight, gender, purineLimit, sugarLimit, kcalLimit FROM Users WHERE username=%s AND password=%s;", (
+  cur.execute("SELECT id, weight, gender, purineLimit, sugarLimit, kcalLimit, language FROM Users WHERE username=%s AND password=%s;", (
     request.json["username"], request.json["password"]
   ))
 
@@ -356,7 +363,7 @@ def check_user_credientals():
   if user == None:
     return {"code": 403, "message": "Wrong credientals"}
 
-  return {"id": user[0], "weight": user[1], "gender": int(user[2]), "purineLimit": user[3], "sugarLimit": user[4], "kcalLimit": user[5]}
+  return {"id": user[0], "weight": user[1], "gender": int(user[2]), "purineLimit": user[3], "sugarLimit": user[4], "kcalLimit": user[5], "language": user[6]}
 
 if __name__ == "__main__":
   app.run(port = 8087, host = "0.0.0.0")
