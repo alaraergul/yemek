@@ -3,6 +3,7 @@ from flask_cors import CORS
 import psycopg2
 from dotenv import load_dotenv
 from os import getenv
+from data_file import categories
 
 load_dotenv()
 conn = psycopg2.connect(database=getenv("DATABASE_NAME"), user=getenv("DATABASE_USER"), password=getenv("DATABASE_PASS"), host=getenv("DATABASE_HOST"))
@@ -11,32 +12,41 @@ cur = conn.cursor()
 app = Flask(__name__)
 CORS(app)
 
+def create_database_tables():
+  cur.execute("CREATE TABLE IF NOT EXISTS Users(" \
+                "id uuid PRIMARY KEY DEFAULT gen_random_uuid()," \
+                "username text UNIQUE NOT NULL," \
+                "password text NOT NULL," \
+                "purineLimit float," \
+                "sugarLimit float," \
+                "kcalLimit float," \
+                "weight int NOT NULL," \
+                "gender bit NOT NULL"
+              ");")
 
-cur.execute("CREATE TABLE IF NOT EXISTS Users(" \
-              "id uuid PRIMARY KEY DEFAULT gen_random_uuid()," \
-              "username text UNIQUE NOT NULL," \
-              "password text NOT NULL," \
-              "purineLimit float," \
-              "sugarLimit float," \
-              "kcalLimit float," \
-              "weight int NOT NULL," \
-              "gender bit NOT NULL" \
-            ");")
+  cur.execute("CREATE TABLE IF NOT EXISTS Meals(" \
+                "userId uuid references Users(id)," \
+                "id int NOT NULL," \
+                "timestamp timestamp NOT NULL," \
+                "count float NOT NULL"
+              ");")
 
-cur.execute("CREATE TABLE IF NOT EXISTS Meals(" \
-              "userId uuid references Users(id)," \
-              "id int NOT NULL," \
-              "timestamp timestamp NOT NULL," \
-              "count float NOT NULL"
-            ");")
+  cur.execute("CREATE TABLE IF NOT EXISTS CustomMeals(" \
+                "userId uuid references Users(id)," \
+                "id int NOT NULL," \
+                "quantity int NOT NULL," \
+                "purine float NOT NULL," \
+                "sugar float NOT NULL," \
+                "kcal float NOT NULL"
+              ");")
 
-cur.execute("CREATE TABLE IF NOT EXISTS WaterConsumption(" \
-              "userId uuid references Users(id)," \
-              "value bit NOT NULL," \
-              "timestamp timestamp NOT NULL"
-            ");")
+  cur.execute("CREATE TABLE IF NOT EXISTS WaterConsumption(" \
+                "userId uuid references Users(id)," \
+                "value bit NOT NULL," \
+                "timestamp timestamp NOT NULL"
+              ");")
 
-conn.commit()
+  conn.commit()
 
 
 def check_is_valid_request(data: Request, element_count: int):
@@ -62,7 +72,88 @@ def check_is_valid_data(data: dict, element_count: int):
 def home():
   return render_template('index.html')
 
-@app.route("/users/<user_id>/water_consumption", methods = ["POST"])
+
+@app.route("/users/<user_id>/custom-meals", methods = ["GET"])
+def get_custom_meals(user_id):
+  cur.execute("SELECT quantity, purine, sugar, kcal WHERE userId=%s", (user_id,))
+  data = cur.fetchall()
+
+  if len(data) == 0:
+    return list()
+  else:
+    response = []
+
+    for meal in data:
+      response.append({"quantity": meal[0], "purine": meal[1], "sugar": meal[2], "kcal": meal[3]})
+
+    return response
+
+@app.route("/users/<user_id>/custom-meals", methods = ["POST"])
+def add_custom_meal(user_id):
+  if (error := check_is_valid_request(request, 4)) != True:
+    return error
+
+  if not "quantity" in request.json or not isinstance(request.json["quantity"], float):
+    return {"code": 400, "message": "Body must contain \"quantity\" key and it must be a float."}
+
+  if not "purine" in request.json or not isinstance(request.json["purine"], float):
+    return {"code": 400, "message": "Body must contain \"timestamp\" key and it must be a float."}
+
+  if not "sugar" in request.json or not isinstance(request.json["sugar"], float):
+    return {"code": 400, "message": "Body must contain \"sugar\" key and it must be a float."}
+
+  if not "kcal" in request.json or not isinstance(request.json["kcal"], float):
+    return {"code": 400, "message": "Body must contain \"kcal\" key and it must be a float."}
+
+  cur.execute("INSERT INTO userId, quantity, purine, sugar, kcal VALUES (%s, %s, %s, %s, %s)", (
+    user_id, request.json["quantity"], request.json["purine"], request.json["sugar"], request.json["kcal"]
+  ))
+  conn.commit()
+
+  return {"status": True}
+
+@app.route("/meals/<user_id>", methods = ["GET"])
+def get_addable_meals(user_id):
+  language_id = 0
+  data = []
+
+  for category in categories:
+    meals = []
+
+    for meal in category["meals"]:
+      meals.append({
+        "id": meal["id"],
+        "name": meal["names"][language_id],
+        "purine": meal["purine"],
+        "kcal": meal["kcal"],
+        "quantity": meal["quantity"],
+        "sugar": meal["sugar"]
+      })
+
+    data.append({
+      "name": category["names"][language_id],
+      "meals": meals
+    })
+
+  return data
+
+
+@app.route("/users/<user_id>/water-consumption", methods = ["GET"])
+def get_water_consumption(user_id):
+  cur.execute("SELECT value, extract(epoch from timestamp) FROM WaterConsumption WHERE userId=%s;", (user_id,))
+  water_consumption = cur.fetchall()
+
+  if len(water_consumption) == 0:
+    return list()
+  else:
+    response = []
+
+    for data in water_consumption:
+      response.append({"value": data[0], "timestamp": int(data[1]) * 1000})
+
+    return response
+
+@app.route("/users/<user_id>/water-consumption", methods = ["POST"])
 def post_water_consumption(user_id):
   if (error := check_is_valid_request(request, 2)) != True:
     return error
@@ -82,18 +173,20 @@ def post_water_consumption(user_id):
 
   return ""
 
-@app.route("/users/<user_id>/water_consumption", methods = ["GET"])
-def get_water_consumption(user_id):
-  cur.execute("SELECT value, extract(epoch from timestamp) FROM WaterConsumption WHERE userId=%s;", (user_id,))
-  water_consumption = cur.fetchall()
 
-  if len(water_consumption) == 0:
+
+@app.route("/users/<user_id>/meals", methods = ["GET"])
+def get_meals(user_id):
+  cur.execute("SELECT id, count, extract(epoch from timestamp) FROM Meals WHERE userId=%s;", (user_id,))
+  meals = cur.fetchall()
+
+  if len(meals) == 0:
     return list()
   else:
     response = []
 
-    for data in water_consumption:
-      response.append({"value": data[0], "timestamp": int(data[1]) * 1000})
+    for meal in meals:
+      response.append({"id": meal[0], "count": meal[1], "timestamp": int(meal[2]) * 1000})
 
     return response
 
@@ -122,21 +215,6 @@ def post_meal(user_id):
 
   return ""
 
-@app.route("/users/<user_id>/meals", methods = ["GET"])
-def get_meals(user_id):
-  cur.execute("SELECT id, count, extract(epoch from timestamp) FROM Meals WHERE userId=%s;", (user_id,))
-  meals = cur.fetchall()
-
-  if len(meals) == 0:
-    return list()
-  else:
-    response = []
-
-    for meal in meals:
-      response.append({"id": meal[0], "count": meal[1], "timestamp": int(meal[2]) * 1000})
-
-    return response
-
 @app.route("/users/<user_id>/meals", methods = ["DELETE"])
 def delete_meal(user_id):
   if (error := check_is_valid_request(request, 2)) != True:
@@ -152,6 +230,8 @@ def delete_meal(user_id):
   conn.commit()
 
   return ""
+
+
 
 @app.route("/users", methods = ["GET"])
 def get_users():
