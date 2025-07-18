@@ -16,9 +16,9 @@ cur.execute("CREATE TABLE IF NOT EXISTS Users(" \
               "id uuid PRIMARY KEY DEFAULT gen_random_uuid()," \
               "username text UNIQUE NOT NULL," \
               "password text NOT NULL," \
-              "purineLimit int," \
-              "sugarLimit int," \
-              "kcalLimit int," \
+              "purineLimit float," \
+              "sugarLimit float," \
+              "kcalLimit float," \
               "weight int NOT NULL," \
               "gender bit NOT NULL" \
             ");")
@@ -27,7 +27,7 @@ cur.execute("CREATE TABLE IF NOT EXISTS Meals(" \
               "userId uuid references Users(id)," \
               "id int NOT NULL," \
               "timestamp timestamp NOT NULL," \
-              "count int NOT NULL"
+              "count float NOT NULL"
             ");")
 
 cur.execute("CREATE TABLE IF NOT EXISTS WaterConsumption(" \
@@ -109,7 +109,7 @@ def post_meal(user_id):
     if not "id" in data or not isinstance(data["id"], int):
       return {"code": 400, "message": "Data must contain \"id\" key and it must be a number."}
 
-    if not "count" in data or not isinstance(data["count"], int):
+    if not "count" in data or not isinstance(data["count"], float):
       return {"code": 400, "message": "Data must contain \"count\" key and it must be a number."}
 
     if not "timestamp" in data or not isinstance(data["timestamp"], int):
@@ -189,23 +189,23 @@ def edit_user(user_id):
     "kcalLimit": user[6]
   }
 
-  if "weight" in request.json and isinstance(request.json["weight"], int):
+  if "weight" in request.json and isinstance(request.json["weight"], float):
     data["weight"] = request.json["weight"]
 
   if "purineLimit" in request.json:
-    if isinstance(request.json["purineLimit"], int):
+    if isinstance(request.json["purineLimit"], float):
       data["purineLimit"] = request.json["purineLimit"]
     elif request.json["purineLimit"] == None and "purineLimit" in data:
       data["purineLimit"] = None
 
   if "sugarLimit" in request.json:
-    if isinstance(request.json["sugarLimit"], int):
+    if isinstance(request.json["sugarLimit"], float):
       data["sugarLimit"] = request.json["sugarLimit"]
     elif request.json["sugarLimit"] == None and "sugarLimit" in data:
       data["sugarLimit"] = None
 
   if "kcalLimit" in request.json:
-    if isinstance(request.json["kcalLimit"], int):
+    if isinstance(request.json["kcalLimit"], float):
       data["kcalLimit"] = request.json["kcalLimit"]
     elif request.json["kcalLimit"] == None and "kcalLimit" in data:
       data["kcalLimit"] = None
