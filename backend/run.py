@@ -13,27 +13,27 @@ app = Flask(__name__)
 CORS(app)
 
 def create_database_tables():
-  cur.execute("CREATE TABLE IF NOT EXISTS Users(" \
+  cur.execute("CREATE TABLE IF NOT EXISTS users(" \
                 "id uuid PRIMARY KEY DEFAULT gen_random_uuid()," \
                 "username text UNIQUE NOT NULL," \
                 "password text NOT NULL," \
-                "purineLimit float," \
-                "sugarLimit float," \
-                "kcalLimit float," \
+                "purine_limit float," \
+                "sugar_limit float," \
+                "kcal_limit float," \
                 "weight int NOT NULL," \
                 "gender bit NOT NULL," \
                 "language bit NOT NULL"
               ");")
 
-  cur.execute("CREATE TABLE IF NOT EXISTS Meals(" \
-                "userId uuid references Users(id)," \
+  cur.execute("CREATE TABLE IF NOT EXISTS meals(" \
+                "user_id uuid references users(id)," \
                 "id int NOT NULL," \
                 "timestamp timestamp NOT NULL," \
                 "count float NOT NULL"
               ");")
 
-  cur.execute("CREATE TABLE IF NOT EXISTS CustomMeals(" \
-                "userId uuid references Users(id)," \
+  cur.execute("CREATE TABLE IF NOT EXISTS custom_meals(" \
+                "user_id uuid references users(id)," \
                 "id int NOT NULL," \
                 "quantity int NOT NULL," \
                 "purine float NOT NULL," \
@@ -41,43 +41,26 @@ def create_database_tables():
                 "kcal float NOT NULL"
               ");")
 
-  cur.execute("CREATE TABLE IF NOT EXISTS WaterConsumption(" \
-                "userId uuid references Users(id)," \
+  cur.execute("CREATE TABLE IF NOT EXISTS water_consumption(" \
+                "user_id uuid references Users(id)," \
                 "value bit NOT NULL," \
                 "timestamp timestamp NOT NULL"
               ");")
 
   conn.commit()
 
-
-def check_is_valid_request(data: Request, element_count: int):
-  if not data.is_json or not isinstance(data.json, dict):
-    return {"code": 400, "message": "Body must be a JSON object."}
-
-  if len(data.json) != element_count:
-    return {"code": 400, "message": f"Body must contain exactly {element_count} members."}
-
-  return True
-
-def check_is_valid_data(data: dict, element_count: int):
-  if not isinstance(data, dict):
-    return {"code": 400, "message": "Body must be a JSON object."}
-
-  if len(data) != element_count:
-    return {"code": 400, "message": f"Body must contain exactly {element_count} members."}
-
   return True
 
 create_database_tables()
 
 @app.route("/")
-def home():
+async def home():
   return render_template('index.html')
 
 
 @app.route("/users/<user_id>/custom-meals", methods = ["GET"])
-def get_custom_meals(user_id):
-  cur.execute("SELECT quantity, purine, sugar, kcal WHERE userId=%s", (user_id,))
+async def get_custom_meals(user_id):
+  cur.execute("SELECT quantity, purine, sugar, kcal WHERE user_id=%s", (user_id,))
   data = cur.fetchall()
 
   if len(data) == 0:
@@ -88,35 +71,32 @@ def get_custom_meals(user_id):
     for meal in data:
       response.append({"quantity": meal[0], "purine": meal[1], "sugar": meal[2], "kcal": meal[3]})
 
-    return response
+    return {"success": True, "data": response}
 
 @app.route("/users/<user_id>/custom-meals", methods = ["POST"])
-def add_custom_meal(user_id):
-  if (error := check_is_valid_request(request, 4)) != True:
-    return error
-
+async def add_custom_meal(user_id):
   if not "quantity" in request.json or not isinstance(request.json["quantity"], float):
-    return {"code": 400, "message": "Body must contain \"quantity\" key and it must be a float."}
+    return {"success": False, "message": "Body must contain \"quantity\" key and it must be a float."}, 400
 
   if not "purine" in request.json or not isinstance(request.json["purine"], float):
-    return {"code": 400, "message": "Body must contain \"timestamp\" key and it must be a float."}
+    return {"success": False, "message": "Body must contain \"timestamp\" key and it must be a float."}, 400
 
   if not "sugar" in request.json or not isinstance(request.json["sugar"], float):
-    return {"code": 400, "message": "Body must contain \"sugar\" key and it must be a float."}
+    return {"success": False, "message": "Body must contain \"sugar\" key and it must be a float."}, 400
 
   if not "kcal" in request.json or not isinstance(request.json["kcal"], float):
-    return {"code": 400, "message": "Body must contain \"kcal\" key and it must be a float."}
+    return {"success": False, "message": "Body must contain \"kcal\" key and it must be a float."}, 400
 
-  cur.execute("INSERT INTO userId, quantity, purine, sugar, kcal VALUES (%s, %s, %s, %s, %s)", (
+  cur.execute("INSERT INTO user_id, quantity, purine, sugar, kcal VALUES (%s, %s, %s, %s, %s)", (
     user_id, request.json["quantity"], request.json["purine"], request.json["sugar"], request.json["kcal"]
   ))
   conn.commit()
 
-  return {"status": True}
+  return {"success": True}
 
 @app.route("/meals/<user_id>", methods = ["GET"])
-def get_addable_meals(user_id):
-  cur.execute("SELECT language FROM Users WHERE id=%s", (user_id,))
+async def get_addable_meals(user_id):
+  cur.execute("SELECT language FROM users WHERE id=%s", (user_id,))
   language = int(cur.fetchone()[0])
 
   data = []
@@ -139,12 +119,12 @@ def get_addable_meals(user_id):
       "meals": meals
     })
 
-  return data
+  return {"success": True, "data": data}
 
 
 @app.route("/users/<user_id>/water-consumption", methods = ["GET"])
-def get_water_consumption(user_id):
-  cur.execute("SELECT value, extract(epoch from timestamp) FROM WaterConsumption WHERE userId=%s;", (user_id,))
+async def get_water_consumption(user_id):
+  cur.execute("SELECT value, extract(epoch from timestamp) FROM water_consumption WHERE user_id=%s;", (user_id,))
   water_consumption = cur.fetchall()
 
   if len(water_consumption) == 0:
@@ -155,215 +135,210 @@ def get_water_consumption(user_id):
     for data in water_consumption:
       response.append({"value": data[0], "timestamp": int(data[1]) * 1000})
 
-    return response
+    return {"success": True, "data": response}
 
 @app.route("/users/<user_id>/water-consumption", methods = ["POST"])
-def post_water_consumption(user_id):
-  if (error := check_is_valid_request(request, 2)) != True:
-    return error
-
+async def post_water_consumption(user_id):
   if not "value" in request.json or not isinstance(request.json["value"], int):
-    return {"code": 400, "message": "Body must contain \"value\" key and it must be a number."}
+    return {"success": False, "message": "Body must contain \"value\" key and it must be a number."}, 400
 
   if not "timestamp" in request.json or not isinstance(request.json["timestamp"], int):
-    return {"code": 400, "message": "Body must contain \"timestamp\" key and it must be a number that represents unix timestamp."}
+    return {"success": False, "message": "Body must contain \"timestamp\" key and it must be a number that represents unix timestamp."}, 400
 
   cur.execute(
-    "INSERT INTO WaterConsumption (userId, value, timestamp) VALUES (%s, B'%s', to_timestamp(%s))",
+    "INSERT INTO WaterConsumption (user_id, value, timestamp) VALUES (%s, B'%s', to_timestamp(%s))",
     (user_id, request.json["value"], request.json["timestamp"] / 1000)
   )
 
   conn.commit()
 
-  return ""
+  return {"success": True}
 
 
 
 @app.route("/users/<user_id>/meals", methods = ["GET"])
-def get_meals(user_id):
-  cur.execute("SELECT id, count, extract(epoch from timestamp) FROM Meals WHERE userId=%s;", (user_id,))
+async def get_meals(user_id):
+  cur.execute("SELECT id, count, extract(epoch from timestamp) FROM meals WHERE user_id=%s;", (user_id,))
   meals = cur.fetchall()
 
   if len(meals) == 0:
-    return list()
+    return {"success": True, "data": list()}
   else:
     response = []
 
     for meal in meals:
       response.append({"id": meal[0], "count": meal[1], "timestamp": int(meal[2]) * 1000})
 
-    return response
+    return {"success": True, "data": response}
 
 @app.route("/users/<user_id>/meals", methods = ["POST"])
-def post_meal(user_id):
+async def post_meal(user_id):
   if not isinstance(request.json, list):
-    return {"code": 400, "message": "Body must be a list."}
+    return {"success": False, "message": "Body must be a list."}, 400
 
   for data in request.json:
-    if (error := check_is_valid_data(data, 3)) != True:
-      return error
-
     if not "id" in data or not isinstance(data["id"], int):
-      return {"code": 400, "message": "Data must contain \"id\" key and it must be a number."}
+      return {"success": False, "message": "Data must contain \"id\" key and it must be a number."}, 400
 
     if not "count" in data or (not isinstance(data["count"], float) and not isinstance(data["count"], int)):
-      return {"code": 400, "message": "Data must contain \"count\" key and it must be a number."}
+      return {"success": False, "message": "Data must contain \"count\" key and it must be a number."}, 400
 
     if not "timestamp" in data or not isinstance(data["timestamp"], int):
-      return {"code": 400, "message": "Data must contain \"timestamp\" key and it must be a number that represents unix timestamp."}
+      return {"success": False, "message": "Data must contain \"timestamp\" key and it must be a number that represents unix timestamp."}, 400
 
   args = b",".join(cur.mogrify("(%s, %s, to_timestamp(%s), %s)", (user_id, data["id"], data["timestamp"] / 1000, data["count"])) for data in request.json).decode("utf-8")
 
-  cur.execute(f"INSERT INTO Meals (userId, id, timestamp, count) VALUES {args}")
+  cur.execute(f"INSERT INTO Meals (user_id, id, timestamp, count) VALUES {args}")
   conn.commit()
 
-  return ""
+  return {"success": True}
 
 @app.route("/users/<user_id>/meals", methods = ["DELETE"])
-def delete_meal(user_id):
-  if (error := check_is_valid_request(request, 2)) != True:
-    return error
-
+async def delete_meal(user_id):
   if not "id" in request.json or not isinstance(request.json["id"], int):
-    return {"code": 400, "message": "Body must contain \"id\" key and it must be a number."}
+    return {"success": False, "message": "Body must contain \"id\" key and it must be a number."}, 400
 
   if not "timestamp" in request.json or not isinstance(request.json["timestamp"], int):
-    return {"code": 400, "message": "Body must contain \"timestamp\" key and it must be a number that represents unix timestamp."}
+    return {"success": False, "message": "Body must contain \"timestamp\" key and it must be a number that represents unix timestamp."}, 400
 
-  cur.execute("DELETE FROM Meals WHERE userId=%s AND id=%s AND timestamp=to_timestamp(%s);", (user_id, request.json["id"], request.json["timestamp"] / 1000))
+  cur.execute("DELETE FROM Meals WHERE user_id=%s AND id=%s AND timestamp=to_timestamp(%s);", (user_id, request.json["id"], request.json["timestamp"] / 1000))
   conn.commit()
 
-  return ""
+  return {"success": True}
 
 
 
 @app.route("/users", methods = ["GET"])
-def get_users():
-  cur.execute("SELECT id FROM Users")
+async def get_users():
+  cur.execute("SELECT id FROM users")
   response = cur.fetchall()
 
   return list(map(lambda value: value[0], response))
 
 @app.route("/users/<user_id>", methods = ["GET"])
-def get_user(user_id):
-  cur.execute("SELECT id, purineLimit, kcalLimit, sugarLimit, weight, gender FROM Users WHERE id=%s;", (user_id,))
+async def get_user(user_id):
+  cur.execute("SELECT id, purine_limit, kcal_limit, sugar_limit, weight, gender, language FROM users WHERE id=%s;", (user_id,))
   user = cur.fetchone()
 
   if user == None:
-    return {"code": 404, "message": "There is no user."}
+    return {"success": False, "message": "There is no user."}, 404
   else:
-    return {"id": user[0], "purineLimit": user[1], "kcalLimit": user[2], "sugarLimit": user[3], "weight": user[4], "gender": int(user[5])}
+    return {"success": True, "data": {
+      "id": user[0], "purineLimit": user[1], "kcalLimit": user[2], "sugarLimit": user[3], "weight": user[4], "gender": int(user[5]), "language": int(user[6])
+    }}
 
 @app.route("/users/<user_id>", methods = ["PATCH"])
-def edit_user(user_id):
-  cur.execute("SELECT username, password, weight, gender, purineLimit, sugarLimit, kcalLimit FROM Users WHERE id=%s;", (user_id,))
+async def edit_user(user_id):
+  cur.execute("SELECT username, password, weight, gender, purine_limit, sugar_limit, kcal_limit, language FROM users WHERE id=%s;", (user_id,))
   user = cur.fetchone()
 
   if not ("password" in request.json and isinstance(request.json["password"], str)) or not ("username" in request.json and isinstance(request.json["username"], str)):
-    return {"code": 403, "message": "Username and password must be existed."}
+    return {"success": False, "message": "Username and password must be existed."}, 403
 
   if user == None or user[1] != request.json["password"] or user[0] != request.json["username"]:
-    return {"code": 403, "message": "Username or password do not match."}
+    return {"success": False, "message": "Username or password do not match."}, 403
 
   data = {
     "weight": user[2],
     "gender": user[3],
-    "purineLimit": user[4],
-    "sugarLimit": user[5],
-    "kcalLimit": user[6]
+    "purine_limit": user[4],
+    "sugar_limit": user[5],
+    "kcal_limit": user[6],
+    "language": user[7]
   }
 
   if "weight" in request.json and isinstance(request.json["weight"], float):
     data["weight"] = request.json["weight"]
 
-  if "purineLimit" in request.json:
-    if isinstance(request.json["purineLimit"], float):
-      data["purineLimit"] = request.json["purineLimit"]
-    elif request.json["purineLimit"] == None and "purineLimit" in data:
-      data["purineLimit"] = None
+  if "purine_limit" in request.json:
+    if isinstance(request.json["purine_limit"], float):
+      data["purine_limit"] = request.json["purine_limit"]
+    elif request.json["purine_limit"] == None and "purine_limit" in data:
+      data["purine_limit"] = None
 
-  if "sugarLimit" in request.json:
-    if isinstance(request.json["sugarLimit"], float):
-      data["sugarLimit"] = request.json["sugarLimit"]
-    elif request.json["sugarLimit"] == None and "sugarLimit" in data:
-      data["sugarLimit"] = None
+  if "sugar_limit" in request.json:
+    if isinstance(request.json["sugar_limit"], float):
+      data["sugar_limit"] = request.json["sugar_limit"]
+    elif request.json["sugar_limit"] == None and "sugar_limit" in data:
+      data["sugar_limit"] = None
 
-  if "kcalLimit" in request.json:
-    if isinstance(request.json["kcalLimit"], float):
-      data["kcalLimit"] = request.json["kcalLimit"]
-    elif request.json["kcalLimit"] == None and "kcalLimit" in data:
-      data["kcalLimit"] = None
+  if "kcal_limit" in request.json:
+    if isinstance(request.json["kcal_limit"], float):
+      data["kcal_limit"] = request.json["kcal_limit"]
+    elif request.json["kcal_limit"] == None and "kcal_limit" in data:
+      data["kcal_limit"] = None
 
   if "gender" in request.json and isinstance(request.json["gender"], int):
     data["gender"] = request.json["gender"]
 
-  cur.execute("UPDATE Users SET gender=B'%s', weight=%s, sugarLimit=%s, purineLimit=%s, kcalLimit=%s WHERE id=%s;", (
-    data["gender"], data["weight"], data["sugarLimit"], data["purineLimit"], data["kcalLimit"], user_id
+  if "language" in request.json and isinstance(request.json["language"], int):
+    data["language"] = request.json["language"]
+
+  cur.execute("UPDATE users SET gender=B'%s', weight=%s, language=B'%s', sugar_limit=%s, purine_limit=%s, kcal_limit=%s WHERE id=%s;", (
+    data["gender"], data["weight"], data["language"], data["sugar_limit"], data["purine_limit"], data["kcal_limit"], user_id
   ))
   conn.commit()
 
-  return ""
+  return {"success": True}
 
 @app.route("/users/register", methods = ["POST"])
-def create_new_user():
-  if (error := check_is_valid_request(request, 5)) != True:
-    return error
-
+async def create_new_user():
   if not "username" in request.json or not isinstance(request.json["username"], str):
-    return {"code": 400, "message": "Body must contain \"username\" key and it must be a string."}
+    return {"success": False, "message": "Body must contain \"username\" key and it must be a string."}, 400
 
   if not "password" in request.json or not isinstance(request.json["password"], str):
-    return {"code": 400, "message": "Body must contain \"password\" key and it must be a string."}
+    return {"success": False, "message": "Body must contain \"password\" key and it must be a string."}, 400
 
   if not "weight" in request.json or not isinstance(request.json["weight"], int):
-    return {"code": 400, "message": "Body must contain \"weight\" key and it must be a number."}
+    return {"success": False, "message": "Body must contain \"weight\" key and it must be a number."}, 400
 
   if not "gender" in request.json or not isinstance(request.json["gender"], int):
-    return {"code": 400, "message": "Body must contain \"gender\" key and it must be a number."}
+    return {"success": False, "message": "Body must contain \"gender\" key and it must be a number."}, 400
 
   if not "language" in request.json or not isinstance(request.json["language"], int):
-    return {"code": 400, "message": "Body must contain \"language\" key and it must be a number."}
+    return {"success": False, "message": "Body must contain \"language\" key and it must be a number."}, 400
 
-  cur.execute("SELECT id FROM Users WHERE username=%s", (request.json["username"],))
+  cur.execute("SELECT id FROM users WHERE username=%s", (request.json["username"],))
 
   if cur.fetchone() != None:
-    return {"code": 403, "message": "This user already exists."}
+    return {"success": False, "message": "This user already exists."}, 403
 
-  cur.execute("INSERT INTO Users(username, password, gender, weight, language) VALUES (%s, %s, B'%s', %s, B'%s') RETURNING id;", (
+  cur.execute("INSERT INTO users(username, password, gender, weight, language) VALUES (%s, %s, B'%s', %s, B'%s') RETURNING id;", (
     request.json["username"], request.json["password"], request.json["gender"], request.json["weight"], request.json["language"]
   ))
 
   conn.commit()
 
-  return {"id": cur.fetchone()[0], "weight": request.json["weight"], "gender": request.json["gender"], "language": request.json["language"]}
+  return {"success": True, "data": {
+    "id": cur.fetchone()[0], "weight": request.json["weight"], "gender": request.json["gender"], "language": request.json["language"]
+  }}
 
 @app.route("/users/login", methods = ["POST"])
-def check_user_credientals():
-  if (error := check_is_valid_request(request, 2)) != True:
-    return error
-
+async def check_user_credientals():
   if not "username" in request.json or not isinstance(request.json["username"], str):
-    return {"code": 400, "message": "Body must contain \"username\" key and it must be a string."}
+    return {"success": False, "message": "Body must contain \"username\" key and it must be a string."}, 400
 
   if not "password" in request.json or not isinstance(request.json["password"], str):
-    return {"code": 400, "message": "Body must contain \"password\" key and it must be a string."}
+    return {"success": False, "message": "Body must contain \"password\" key and it must be a string."}, 400
 
   cur.execute("SELECT COUNT(*) FROM Users")
   count = cur.fetchone()[0]
 
   if count == 0:
-    return {"code": 404, "message": "There is no user"}
+    return {"success": False, "message": "There is no user"}, 404
 
-  cur.execute("SELECT id, weight, gender, purineLimit, sugarLimit, kcalLimit, language FROM Users WHERE username=%s AND password=%s;", (
+  cur.execute("SELECT id, weight, gender, purine_limit, sugar_limit, kcal_limit, language FROM Users WHERE username=%s AND password=%s;", (
     request.json["username"], request.json["password"]
   ))
 
   user = cur.fetchone()
 
   if user == None:
-    return {"code": 403, "message": "Wrong credientals"}
+    return {"success": False, "message": "Wrong credientals"}, 403
 
-  return {"id": user[0], "weight": user[1], "gender": int(user[2]), "purineLimit": user[3], "sugarLimit": user[4], "kcalLimit": user[5], "language": user[6]}
+  return {"success": True, "data": {
+    "id": user[0], "weight": user[1], "gender": int(user[2]), "purine_limit": user[3], "sugar_limit": user[4], "kcal_limit": user[5], "language": user[6]
+  }}
 
 if __name__ == "__main__":
   app.run(port = 8087, host = "0.0.0.0")
