@@ -22,7 +22,7 @@ async def get_user_meals(user_id):
   if user is None:
     return {"success": False, "message": "There is no user."}, 404
   else:
-    categories = meal_service.get_constant_meals()
+    categories = meal_service.get_all_meals()
     return {"success": True, "data": [category.to_dict(user.language) for category in categories]}
 
 @meal_blueprint.route("/<user_id>/data", methods = ["GET"])

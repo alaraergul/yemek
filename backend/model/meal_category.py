@@ -4,9 +4,15 @@ from model.user import Language
 from model.meal import Meal
 
 class MealCategory:
-  def __init__(self, names: List[str], meals: List[dict]):
+  def __init__(self, names: List[str], meals: List[Meal | dict]):
     self.names = names # ["turkish name", "english name"]
-    self.meals = [Meal(**meal) for meal in meals]
+    self.meals = []
+
+    for meal in meals:
+      if isinstance(meal, Meal):
+        self.meals.append(meal)
+      else:
+        self.meals.append(Meal(**meal))
 
   def to_dict(self, language: Language):
     return {

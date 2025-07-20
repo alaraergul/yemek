@@ -1,18 +1,31 @@
-from typing import Optional, List
+from typing import List, Optional
 
 from repository.meal_repository import MealRepository
+from repository.custom_meal_repository import CustomMealRepository
 
 from model.meal_category import MealCategory
 from model.meal_entry import MealEntry
+from model.meal import Meal
 
 from data_file import categories
 
 class MealService:
-  def __init__(self, meal_repository: MealRepository):
+  def __init__(self, meal_repository: MealRepository, custom_meal_repository: CustomMealRepository):
     self.meal_repository = meal_repository
+    self.custom_meal_repository = custom_meal_repository
 
   def get_constant_meals(self) -> List[MealCategory]:
     return [MealCategory(**category) for category in categories]
+
+  def get_custom_meals(self) -> List[Meal]:
+    return self.custom_meal_repository.get_custom_meals()
+
+  def get_all_meals(self) -> List[MealCategory]:
+    customCategory = MealCategory(["Özel Yemekler", "Custom Meals"], self.custom_meal_repository.get_custom_meals())
+    return [customCategory] + [MealCategory(**category) for category in categories]
+
+  def push_custom_meal(self, names: List[str], quantity: int, purine: float, sugar: float, kcal: float) -> Optional[Meal]:
+    return self.custom_meal_repository.push_custom_meal(names, quantity, purine, sugar, kcal)
 
   def get_meal_data(self, user_id: str) -> List[MealEntry]:
     meals = self.meal_repository.get_meals(user_id)
