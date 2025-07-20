@@ -66,7 +66,7 @@ class UserRepository:
   def get_user_id(self, username: str, password: str) -> Optional[str]:
     cur = self.db.get_cursor()
     cur.execute("SELECT id FROM users WHERE username=%s AND password=%s", (username, password))
-    user_id = cur.fetchone()
+    user_id = cur.fetchone()[0]
 
     return user_id
 
