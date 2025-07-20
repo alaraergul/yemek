@@ -1,7 +1,9 @@
+from typing import List
+
 from model.user import Language
 
 class Meal:
-  def __init__(self, id: int, names: str, quantity: int, purine: int, kcal: int, sugar: int):
+  def __init__(self, id: int, names: List[str], quantity: int, purine: float, kcal: float, sugar: float):
     self.id = id
     self.names = names # ["turkish name", "english name"]
     self.quantity = quantity
