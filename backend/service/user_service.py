@@ -23,14 +23,13 @@ class UserService:
       id = self.user_repository.register(username, password, language, gender, weight, first_name, last_name)
       return self.user_repository.get_user(id)
 
-  def edit_user(self, username: str, password: str,
+  def edit_user(self, user_id: str, username: str, password: str,
     gender: Gender, language: Language, weight: int, first_name: str, last_name: str,
     purine_limit: Optional[int], kcal_limit: Optional[int], sugar_limit: Optional[int]
   ) -> bool:
     id = self.user_repository.get_user_id(username, password)
 
-    if id != None:
-      self.user_repository.edit_user(gender, language, weight, first_name, last_name, purine_limit, kcal_limit, sugar_limit)
-      return True
+    if id == user_id:
+      return self.user_repository.edit_user(id, gender, language, weight, first_name, last_name, purine_limit, kcal_limit, sugar_limit)
     else:
       return False

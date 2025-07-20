@@ -73,7 +73,7 @@ class UserRepository:
   def edit_user(self, id: str,
     gender: Gender, language: Language, weight: int, first_name: str, last_name: str,
     purine_limit: Optional[int], kcal_limit: Optional[int], sugar_limit: Optional[int]
-  ):
+  ) -> bool:
     cur = self.db.get_cursor()
     cur.execute(
       "UPDATE users SET gender=B'%s', weight=%s, language=B'%s', firstname=%s, lastname=%s, sugarlimit=%s, purinelimit=%s, kcallimit=%s WHERE id=%s;",
@@ -81,6 +81,7 @@ class UserRepository:
     )
 
     self.db.commit()
+    return cur.rowcount == 1
 
   def register(self, username: str, password: str, language: Language, gender: Gender, weight: int, first_name: str, last_name: str) -> str:
     cur = self.db.get_cursor()

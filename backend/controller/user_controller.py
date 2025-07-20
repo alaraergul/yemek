@@ -21,6 +21,15 @@ async def get_user(user_id):
   else:
     return {"success": True, "data": user.to_dict()}
 
+@user_blueprint.route("/<user_id>", methods = ["PATCH"])
+async def edit_user(user_id):
+  success = user_service.edit_user(user_id, request.json["username"], request.json["password"],
+    request.json["gender"], request.json["language"], request.json["weight"], request.json["firstName"],
+    request.json["lastName"], request.json["purineLimit"], request.json["kcalLimit"], request.json["sugarLimit"]
+  )
+
+  return {"success": success}
+
 @user_blueprint.route("/login", methods = ["POST"])
 async def login_user():
   user = user_service.login_user(request.json["username"], request.json["password"])
