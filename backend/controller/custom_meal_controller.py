@@ -36,10 +36,10 @@ async def post_custom_meal():
     if meal is None:
       return {"success": False, "message": "Custom meal cannot be pushed."}
     else:
-      # sse_service.sse_send_to_all(json.dumps(meal))
       return {"success": True, "data": meal.to_dict(user.language)}
 
-@custom_meal_blueprint.route("/events", methods = ["GET"])
-async def stream_custom_meals():
+@custom_meal_blueprint.route("/events")
+def stream_custom_meals(): # async is blocked because of sse
   queue = Queue()
+  meal_service.subscriptions.append(queue)
   return Response(stream_with_context(meal_service.stream_custom_meals(queue)), mimetype="text/event-stream")

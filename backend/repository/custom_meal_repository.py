@@ -23,7 +23,7 @@ class CustomMealRepository:
         IF EXISTS (
           SELECT 1 FROM pg_class WHERE relkind = 'S' AND relname = 'custom_meals_id_seq'
         ) THEN
-          ALTER SEQUENCE custom_meals_id_seq RESTART WITH 300;
+          PERFORM setval('custom_meals_id_seq', COALESCE((SELECT MAX(id) FROM custom_meals), 299));
         END IF;
       END
       $$;

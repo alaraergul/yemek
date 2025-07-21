@@ -34,7 +34,7 @@ class MealService:
       return response
 
     for queue in self.subscriptions:
-      queue.put(dumps({"id": id, "names": names, "quantity": quantity, "purine": purine, "sugar": sugar, "kcal": kcal}))
+      queue.put(dumps({"id": response.id, "names": names, "quantity": quantity, "purine": purine, "sugar": sugar, "kcal": kcal}))
 
     return response
 

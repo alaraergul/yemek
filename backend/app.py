@@ -46,4 +46,4 @@ send_custom_meal_services(meal_service, user_service)
 app.register_blueprint(custom_meal_blueprint, url_prefix="/custom-meals")
 
 if __name__ == "__main__":
-  app.run(port = 8087, host = "0.0.0.0")
+  app.run(port = 8087, host = "0.0.0.0", threaded = True)
