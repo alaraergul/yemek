@@ -8,17 +8,26 @@ class CustomMealRepository:
   def __init__(self, db: DatabaseService):
     self.db = db
 
-    self.db.get_cursor().execute("CREATE TABLE IF NOT EXISTS custom_meals(" \
-      "id serial PRIMARY KEY," \
-      "names text[2] NOT NULL," \
-      "quantity int NOT NULL," \
-      "purine float NOT NULL," \
-      "sugar float NOT NULL," \
-      "kcal float NOT NULL"
-    ");" \
-    \
-    "ALTER SEQUENCE custom_meals_id_seq RESTART 300;")
+    self.db.get_cursor().execute("""
+      CREATE TABLE IF NOT EXISTS custom_meals (
+        id serial PRIMARY KEY,
+        names text[2] NOT NULL,
+        quantity int NOT NULL,
+        purine float NOT NULL,
+        sugar float NOT NULL,
+        kcal float NOT NULL
+      );
 
+      DO $$
+      BEGIN
+        IF EXISTS (
+          SELECT 1 FROM pg_class WHERE relkind = 'S' AND relname = 'custom_meals_id_seq'
+        ) THEN
+          ALTER SEQUENCE custom_meals_id_seq RESTART WITH 300;
+        END IF;
+      END
+      $$;
+    """)
     self.db.commit()
 
   def get_custom_meals(self) -> List[Meal]:
