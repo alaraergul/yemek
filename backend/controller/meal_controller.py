@@ -44,3 +44,13 @@ async def push_user_meal_data(user_id):
   else:
     success = meal_service.push_meal_data(user.id, *[MealEntry(data["id"], data["timestamp"], data["count"]) for data in request.json])
     return {"success": success}
+
+@meal_blueprint.route("/<user_id>/data", methods = ["DELETE"])
+async def push_user_meal_data(user_id):
+  user = user_service.get_user(user_id)
+
+  if user is None:
+    return {"success": False, "message": "There is no user."}, 404
+  else:
+    success = meal_service.delete_meal_data(user_id, request.json["id"], request.json["timestamp"])
+    return {"success": success}
