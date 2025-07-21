@@ -46,7 +46,7 @@ async def push_user_meal_data(user_id):
     return {"success": success}
 
 @meal_blueprint.route("/<user_id>/data", methods = ["DELETE"])
-async def push_user_meal_data(user_id):
+async def delete_user_meal_data(user_id):
   user = user_service.get_user(user_id)
 
   if user is None:

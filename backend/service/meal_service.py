@@ -58,4 +58,4 @@ class MealService:
     return self.meal_repository.push_meal(user_id, *[MealEntry(entry.id, entry.timestamp / 1000, entry.count) for entry in entries])
 
   def delete_meal_data(self, user_id: str, id: int, timestamp: int) -> bool:
-    return self.meal_repository.delete_meal(user_id, id, timestamp)
+    return self.meal_repository.delete_meal(user_id, id, timestamp / 1000)

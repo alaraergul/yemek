@@ -23,7 +23,7 @@ class MealRepository:
     cur.execute("SELECT id, extract(epoch from timestamp), count FROM meals WHERE userid=%s;", (user_id,))
     entries = cur.fetchall()
 
-    return [MealEntry(entry[0], int(entry[1]), entry[2]) for entry in entries]
+    return [MealEntry(entry[0], float(entry[1]), entry[2]) for entry in entries]
 
   def push_meal(self, user_id: str, *entries: MealEntry) -> bool:
     cur = self.db.get_cursor()
@@ -33,7 +33,7 @@ class MealRepository:
 
     return cur.rowcount == len(entries)
 
-  def delete_meal(self, user_id: str, id: int, timestamp: int) -> bool:
+  def delete_meal(self, user_id: str, id: int, timestamp: float) -> bool:
     cur = self.db.get_cursor()
     cur.execute("DELETE FROM meals WHERE userid=%s AND id=%s AND timestamp=to_timestamp(%s);", (user_id, id, timestamp))
     self.db.commit()
