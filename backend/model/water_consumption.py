@@ -15,3 +15,4 @@ class WaterConsumption:
       "value": self.value,
       "timestamp": self.timestamp
     }
+
