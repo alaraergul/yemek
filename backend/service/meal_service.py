@@ -1,4 +1,6 @@
 from typing import List, Optional
+from json import dumps
+from queue import Queue
 
 from repository.meal_repository import MealRepository
 from repository.custom_meal_repository import CustomMealRepository
@@ -13,6 +15,7 @@ class MealService:
   def __init__(self, meal_repository: MealRepository, custom_meal_repository: CustomMealRepository):
     self.meal_repository = meal_repository
     self.custom_meal_repository = custom_meal_repository
+    self.subscriptions: List[Queue] = []
 
   def get_constant_meals(self) -> List[MealCategory]:
     return [MealCategory(**category) for category in categories]
@@ -25,7 +28,23 @@ class MealService:
     return [customCategory] + [MealCategory(**category) for category in categories]
 
   def push_custom_meal(self, names: List[str], quantity: int, purine: float, sugar: float, kcal: float) -> Optional[Meal]:
-    return self.custom_meal_repository.push_custom_meal(names, quantity, purine, sugar, kcal)
+    response = self.custom_meal_repository.push_custom_meal(names, quantity, purine, sugar, kcal)
+
+    if response == False:
+      return response
+
+    for queue in self.subscriptions:
+      queue.put(dumps({"id": id, "names": names, "quantity": quantity, "purine": purine, "sugar": sugar, "kcal": kcal}))
+
+    return response
+
+  def stream_custom_meals(self, queue: Queue):
+    try:
+      while True:
+        data = queue.get()
+        yield f"data: {data}\n\n"
+    except GeneratorExit:
+      self.subscriptions.remove(queue)
 
   def get_meal_data(self, user_id: str) -> List[MealEntry]:
     meals = self.meal_repository.get_meals(user_id)

@@ -44,6 +44,6 @@ class CustomMealRepository:
     ))
 
     self.db.commit()
-    id = cur.fetchone()[0]
 
+    id = cur.fetchone()[0]
     return Meal(id, names, quantity, purine, kcal, sugar)

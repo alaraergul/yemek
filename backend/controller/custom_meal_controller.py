@@ -1,25 +1,18 @@
-from flask import Blueprint, request
-from typing import Optional
-import json
-
-from model.meal import Meal
+from flask import Blueprint, Response, request, stream_with_context
+from queue import Queue
 
 from service.user_service import UserService
 from service.meal_service import MealService
-from service.sse_service import SseService
 
 custom_meal_blueprint = Blueprint("custom_meal", __name__)
 user_service: UserService = None
 meal_service: MealService = None
-sse_service: SseService = None
 
-def send_custom_meal_services(_sse_service: SseService, _meal_service: MealService, _user_service: UserService):
+def send_custom_meal_services(_meal_service: MealService, _user_service: UserService):
   global meal_service
   global user_service
-  global sse_service
   meal_service = _meal_service
   user_service = _user_service
-  sse_service = _sse_service
 
 @custom_meal_blueprint.route("/", methods = ["GET"])
 async def get_custom_meals():
@@ -45,3 +38,8 @@ async def post_custom_meal():
     else:
       # sse_service.sse_send_to_all(json.dumps(meal))
       return {"success": True, "data": meal.to_dict(user.language)}
+
+@custom_meal_blueprint.route("/events", methods = ["GET"])
+async def stream_custom_meals():
+  queue = Queue()
+  return Response(stream_with_context(meal_service.stream_custom_meals(queue)), mimetype="text/event-stream")
