@@ -38,10 +38,10 @@ async def post_custom_meal():
   if user is None:
     return {"success": False, "message": "Unauthorized access."}, 403
   else:
-    meal = meal_service.push_custom_meal(request.json["names"], request.json["quantity"], request.json["purine"], request.json["sugar"], request.json["purine"])
+    meal = meal_service.push_custom_meal(request.json["names"], request.json["quantity"], request.json["purine"], request.json["sugar"], request.json["kcal"])
 
     if meal is None:
       return {"success": False, "message": "Custom meal cannot be pushed."}
     else:
-      sse_service.sse_send_to_all(json.dumps(meal))
+      # sse_service.sse_send_to_all(json.dumps(meal))
       return {"success": True, "data": meal.to_dict(user.language)}
