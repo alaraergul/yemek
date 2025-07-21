@@ -18,14 +18,14 @@ class MealService:
     self.subscriptions: List[Queue] = []
 
   def get_constant_meals(self) -> List[MealCategory]:
-    return [MealCategory(**category) for category in categories]
+    return [MealCategory(category["names"], [Meal(**meal) for meal in category["meals"]]) for category in categories]
 
   def get_custom_meals(self) -> List[Meal]:
     return self.custom_meal_repository.get_custom_meals()
 
   def get_all_meals(self) -> List[MealCategory]:
     customCategory = MealCategory(["Özel Yemekler", "Custom Meals"], self.custom_meal_repository.get_custom_meals())
-    return [customCategory] + [MealCategory(**category) for category in categories]
+    return [customCategory] + self.get_constant_meals()
 
   def push_custom_meal(self, names: List[str], quantity: int, purine: float, sugar: float, kcal: float) -> Optional[Meal]:
     response = self.custom_meal_repository.push_custom_meal(names, quantity, purine, sugar, kcal)
