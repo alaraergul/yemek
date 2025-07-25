@@ -1,5 +1,5 @@
 from flask import Blueprint, Response, request, stream_with_context
-from queue import Queue
+from gevent.queue import Queue
 
 from service.user_service import UserService
 from service.meal_service import MealService

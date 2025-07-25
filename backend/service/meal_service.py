@@ -1,30 +1,40 @@
 from typing import List, Optional
 from json import dumps
-from queue import Queue
+from gevent.queue import Queue
 
 from repository.meal_repository import MealRepository
+from repository.category_repository import CategoryRepository
+from repository.constant_meal_repository import ConstantMealRepository
 from repository.custom_meal_repository import CustomMealRepository
 
 from model.meal_category import MealCategory
 from model.meal_entry import MealEntry
 from model.meal import Meal
 
-from data_file import categories
-
 class MealService:
-  def __init__(self, meal_repository: MealRepository, custom_meal_repository: CustomMealRepository):
+  def __init__(self,
+      meal_repository: MealRepository, custom_meal_repository: CustomMealRepository,
+      category_repository: CategoryRepository, constant_meal_repository: ConstantMealRepository
+  ):
     self.meal_repository = meal_repository
     self.custom_meal_repository = custom_meal_repository
+    self.category_repository = category_repository
+    self.constant_meal_repository = constant_meal_repository
     self.subscriptions: List[Queue] = []
 
   def get_constant_meals(self) -> List[MealCategory]:
-    return [MealCategory(category["names"], [Meal(**meal) for meal in category["meals"]]) for category in categories]
+    categories = self.category_repository.get_categories()
+
+    for category in categories:
+      category.meals = [Meal(*meal) for meal in self.constant_meal_repository.get_constant_meals_of_category(category.id)]
+
+    return categories
 
   def get_custom_meals(self) -> List[Meal]:
     return self.custom_meal_repository.get_custom_meals()
 
   def get_all_meals(self) -> List[MealCategory]:
-    customCategory = MealCategory(["Özel Yemekler", "Custom Meals"], self.custom_meal_repository.get_custom_meals())
+    customCategory = MealCategory(-1, ["Özel Yemekler", "Custom Meals"], self.custom_meal_repository.get_custom_meals())
     return [customCategory] + self.get_constant_meals()
 
   def push_custom_meal(self, names: List[str], quantity: int, purine: float, sugar: float, kcal: float) -> Optional[Meal]:
