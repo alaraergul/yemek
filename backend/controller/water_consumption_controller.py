@@ -14,7 +14,7 @@ def send_water_consumption_services(_water_consumption_service: WaterConsumption
   water_consumption_service = _water_consumption_service
 
 @water_consumption_blueprint.route("/<user_id>", methods = ["GET"])
-async def get_user_water_consumption(user_id):
+def get_user_water_consumption(user_id):
   user = user_service.get_user(user_id)
 
   if user is None:
@@ -24,7 +24,7 @@ async def get_user_water_consumption(user_id):
     return {"success": True, "data": [entry.to_dict() for entry in entries]}
 
 @water_consumption_blueprint.route("/<user_id>", methods = ["POST"])
-async def push_user_water_consumption(user_id):
+def push_user_water_consumption(user_id):
   user = user_service.get_user(user_id)
 
   if user is None:

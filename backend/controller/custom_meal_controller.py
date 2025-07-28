@@ -15,7 +15,7 @@ def send_custom_meal_services(_meal_service: MealService, _user_service: UserSer
   user_service = _user_service
 
 @custom_meal_blueprint.route("/", methods = ["GET"])
-async def get_custom_meals():
+def get_custom_meals():
   user = user_service.login_user(request.json["username"], request.json["password"])
 
   if user is None:
@@ -25,7 +25,7 @@ async def get_custom_meals():
     return {"success": True, "data": [meal.to_dict(user.language) for meal in meals]}
 
 @custom_meal_blueprint.route("/", methods = ["POST"])
-async def post_custom_meal():
+def post_custom_meal():
   user = user_service.login_user(request.json["username"], request.json["password"])
 
   if user is None:
