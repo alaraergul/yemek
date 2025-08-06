@@ -29,3 +29,9 @@ class WaterConsumptionRepository:
     self.db.commit()
 
     return cur.rowcount == 1
+  
+  def delete_user_water_consumption(self, user_id: str) -> bool:
+    cur = self.db.get_cursor()
+    cur.execute("DELETE FROM water_consumption WHERE user_id=%s;", (user_id,))
+    self.db.commit()
+    return cur.rowcount >= 0

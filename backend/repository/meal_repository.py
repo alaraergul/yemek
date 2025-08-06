@@ -39,3 +39,9 @@ class MealRepository:
     self.db.commit()
 
     return cur.rowcount == 1
+  
+  def delete_user_meals(self, user_id: str) -> bool:
+    cur = self.db.get_cursor()
+    cur.execute("DELETE FROM meals WHERE userid=%s;", (user_id,))
+    self.db.commit()
+    return cur.rowcount >= 0

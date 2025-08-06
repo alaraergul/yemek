@@ -69,3 +69,6 @@ class MealService:
 
   def delete_meal_data(self, user_id: str, id: int, timestamp: int) -> bool:
     return self.meal_repository.delete_meal(user_id, id, timestamp / 1000)
+  
+  def delete_user_all_meals(self, user_id: str) -> bool:
+    return self.meal_repository.delete_user_meals(user_id)

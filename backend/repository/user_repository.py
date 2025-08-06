@@ -94,3 +94,9 @@ class UserRepository:
     self.db.commit()
 
     return user_id
+
+  def delete_user(self, id: str) -> bool:
+    cur = self.db.get_cursor()
+    cur.execute("DELETE FROM users WHERE id=%s;", (id,))
+    self.db.commit()
+    return cur.rowcount == 1

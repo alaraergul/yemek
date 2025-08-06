@@ -3,9 +3,21 @@ from typing import Optional, List
 from repository.user_repository import UserRepository
 from model.user import User, Language, Gender
 
+from service.meal_service import MealService
+from service.water_consumption_service import WaterConsumptionService
+
 class UserService:
   def __init__(self, user_repository: UserRepository):
     self.user_repository = user_repository
+
+  def set_services(self, meal_service: MealService, water_consumption_service: WaterConsumptionService):
+    self.meal_service = meal_service
+    self.water_consumption_service = water_consumption_service
+
+  def delete_user_account(self, user_id: str) -> bool:
+    self.meal_service.delete_user_all_meals(user_id)
+    self.water_consumption_service.delete_user_all_consumption(user_id)
+    return self.user_repository.delete_user(user_id)
 
   def get_all_users(self) -> List[User]:
     return self.user_repository.get_all_users()

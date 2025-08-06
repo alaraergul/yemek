@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 from flask_cors import CORS
 from dotenv import load_dotenv
 
@@ -37,6 +37,7 @@ user_service = UserService(user_repository)
 meal_service = MealService(meal_repository, custom_meal_repository, category_repository, constant_meal_repository)
 water_consumption_service = WaterConsumptionService(water_consumption_repository)
 
+user_service.set_services(meal_service, water_consumption_service)
 send_user_services(user_service)
 app.register_blueprint(user_blueprint, url_prefix="/users")
 
@@ -48,3 +49,12 @@ app.register_blueprint(water_consumption_blueprint, url_prefix="/water-consumpti
 
 send_custom_meal_services(meal_service, user_service)
 app.register_blueprint(custom_meal_blueprint, url_prefix="/custom-meals")
+
+@user_blueprint.route("/<user_id>", methods = ["DELETE"])
+def delete_user_account(user_id):
+  success = user_service.delete_user_account(user_id)
+
+  if success:
+    return {"success": True, "message": "User deleted successfully."}, 200
+  else:
+    return {"success": False, "message": "Failed to delete user."}, 500

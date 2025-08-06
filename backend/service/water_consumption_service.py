@@ -18,3 +18,6 @@ class WaterConsumptionService:
 
   def push_water_consumption(self, user_id: str, value: WaterValue, timestamp: int) -> bool:
     return self.water_consumption_repository.push_water_consumption(user_id, value, timestamp / 1000)
+  
+  def delete_user_all_consumption(self, user_id: str) -> bool:
+    return self.water_consumption_repository.delete_user_water_consumption(user_id)
