@@ -47,3 +47,12 @@ def register_user():
     return {"success": False, "message": "There is no user."}, 404
   else:
     return {"success": True, "data": user.to_dict()}
+  
+@user_blueprint.route("/<user_id>", methods = ["DELETE"])
+def delete_user_account(user_id):
+  success = user_service.delete_user_account(user_id)
+
+  if success:
+    return {"success": True, "message": "User deleted successfully."}, 200
+  else:
+    return {"success": False, "message": "Failed to delete user."}, 500
